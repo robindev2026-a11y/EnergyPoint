@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enquire • EnergyPoint Experience Center</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+    
+    body { font-family: 'Inter', system_ui, sans-serif; }
+    .font-display { font-family: 'Space Grotesk', 'Inter', system_ui, sans-serif; }
+    
+    .futuristic-bg {
+      background: radial-gradient(circle at 50% 15%, #0a0f1e 0%, #05070f 100%);
+    }
+    
+    .glass {
+      background: rgba(10, 15, 30, 0.82);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(0, 229, 255, 0.18);
+    }
+    
+    .neon-input {
+      background: rgba(5, 7, 15, 0.6);
+      border: 1px solid rgba(255,255,255,0.12);
+      transition: all 0.2s ease;
+    }
+    
+    .neon-input:focus {
+      border-color: #00e5ff;
+      box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.1);
+      outline: none;
+    }
+    
+    .section-header {
+      letter-spacing: -0.03em;
+    }
+
+    .lead-card {
+      transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    .success-check {
+      animation: scale-pop 0.5s cubic-bezier(0.23, 1.0, 0.32, 1);
+    }
+
+    @keyframes scale-pop {
+      0% { transform: scale(0.6); opacity: 0; }
+      70% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .pill {
+      transition: all 0.15s ease;
+    }
+    
+    .pill-active {
+      background: #00e5ff;
+      color: #05070f;
+      border-color: #00e5ff;
+    }
+
+    .form-label {
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .futuristic-btn {
+      transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    
+    .futuristic-btn:hover {
+      transform: translateY(-1px);
+    }
+    
+    .futuristic-btn:active {
+      transform: scale(0.985);
+    }
+
+    .metric-small {
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body class="bg-[#05070f] text-white min-h-screen futuristic-bg">
+  <!-- Top Nav -->
+  <nav class="border-b border-white/10 bg-[#05070f]/80 backdrop-blur-xl sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto px-6 h-20 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-x-3 group">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#00e5ff] to-[#39ff14] flex items-center justify-center group-active:scale-95 transition">
+          <span class="text-[#05070f] font-bold text-xl tracking-tighter font-display">EP</span>
+        </div>
+        <div class="font-semibold tracking-[-1.2px] text-xl font-display">ENERGYPOINT</div>
+      </a>
+      
+      <a href="index.html" 
+         class="flex items-center gap-x-2 text-sm px-5 py-2 rounded-2xl border border-white/20 hover:bg-white/5 transition">
+        ← Back to Experience Center
+      </a>
+    </div>
+  </nav>
+
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-24">
+    <!-- Header -->
+    <div class="max-w-xl">
+      <div class="inline px-4 py-1 rounded-3xl bg-white/5 text-xs border border-white/10 tracking-[2px]">LEAD CAPTURE</div>
+      <h1 class="mt-5 text-7xl font-semibold tracking-[-3.5px] leading-none font-display">Let's power<br>your future.</h1>
+      <p class="mt-5 text-xl text-white/65">Tell us about your project. We'll get back to you within hours and can send all details directly to WhatsApp.</p>
+    </div>
+
+    <div class="mt-10 grid lg:grid-cols-12 gap-8">
+      
+      <!-- FORM -->
+      <div class="lg:col-span-7">
+        <div class="glass rounded-3xl p-9 border border-white/10">
+          <form id="lead-form" onsubmit="handleSubmit(event)">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <!-- Name -->
+              <div>
+                <label class="form-label block mb-2 text-white/60">Full Name *</label>
+                <input type="text" id="fullName" required 
+                       class="neon-input w-full px-5 py-3.5 rounded-2xl text-white placeholder-white/30"
+                       placeholder="Rahul Menon">
+              </div>
+              
+              <!-- Phone -->
+              <div>
+                <label class="form-label block mb-2 text-white/60">Phone / WhatsApp *</label>
+                <input type="tel" id="phone" required 
+                       class="neon-input w-full px-5 py-3.5 rounded-2xl text-white placeholder-white/30"
+                       placeholder="+91 98765 43210">
+                <div class="text-[10px] text-white/40 mt-1 px-1">We'll send a confirmation here</div>
+              </div>
+            </div>
+
+            <!-- Email -->
+            <div class="mt-5">
+              <label class="form-label block mb-2 text-white/60">Email Address</label>
+              <input type="email" id="email" 
+                     class="neon-input w-full px-5 py-3.5 rounded-2xl text-white placeholder-white/30"
+                     placeholder="you@company.com">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-5">
+              <!-- Location -->
+              <div>
+                <label class="form-label block mb-2 text-white/60">Location in Kerala *</label>
+                <input type="text" id="location" required 
+                       class="neon-input w-full px-5 py-3.5 rounded-2xl text-white placeholder-white/30"
+                       placeholder="Kochi, Ernakulam">
+              </div>
+
+              <!-- Interest Type -->
+              <div>
+                <label class="form-label block mb-2 text-white/60">I'm interested in</label>
+                <div class="flex flex-wrap gap-2" id="interest-pills">
+                  <button type="button" onclick="selectInterest(this, 'Residential')" 
+                          class="pill px-5 py-2 rounded-2xl border border-white/20 text-sm bg-white/5 active:scale-[0.985]">Residential</button>
+                  <button type="button" onclick="selectInterest(this, 'Commercial')" 
+                          class="pill px-5 py-2 rounded-2xl border border-white/20 text-sm bg-white/5 active:scale-[0.985]">Commercial</button>
+                  <button type="button" onclick="selectInterest(this, 'Industrial')" 
+                          class="pill px-5 py-2 rounded-2xl border border-white/20 text-sm bg-white/5 active:scale-[0.985]">Industrial</button>
+                  <button type="button" onclick="selectInterest(this, 'Experience Center Visit')" 
+                          class="pill px-5 py-2 rounded-2xl border border-white/20 text-sm bg-white/5 active:scale-[0.985]">Experience Center Visit</button>
+                </div>
+                <input type="hidden" id="interest" value="Residential">
+              </div>
+            </div>
+
+            <!-- Capacity -->
+            <div class="mt-5">
+              <label class="form-label block mb-2 text-white/60">Approx. Capacity Needed (optional)</label>
+              <select id="capacity" class="neon-input w-full px-5 py-3.5 rounded-2xl text-white">
+                <option value="">Not sure yet</option>
+                <option value="3-5 kWh">3 – 5 kWh (small home)</option>
+                <option value="5-10 kWh">5 – 10 kWh (villa / small office)</option>
+                <option value="10-20 kWh">10 – 20 kWh (large home / small commercial)</option>
+                <option value="20-50 kWh">20 – 50 kWh (commercial / light industrial)</option>
+                <option value="50+ kWh">50+ kWh (industrial / large facility)</option>
+              </select>
+            </div>
+
+            <!-- Message -->
+            <div class="mt-5">
+              <label class="form-label block mb-2 text-white/60">Tell us more about your requirement</label>
+              <textarea id="message" rows="4" 
+                        class="neon-input w-full px-5 py-4 rounded-2xl text-white placeholder-white/30 resize-y min-h-[112px]"
+                        placeholder="We currently use 3 lead-acid batteries for our inverter. Looking to switch to lithium for our new office in Kochi. Need solar integration too."></textarea>
+            </div>
+
+            <button type="submit"
+                    class="futuristic-btn mt-7 w-full h-14 rounded-3xl bg-white text-[#05070f] font-semibold text-base tracking-wide flex items-center justify-center gap-x-3 hover:bg-[#00e5ff] active:bg-white transition-colors">
+              <span id="submit-text">SUBMIT &amp; CONTINUE TO WHATSAPP</span>
+            </button>
+
+            <p class="text-center text-xs text-white/40 mt-4">Your details are used only for follow-up. We respect your privacy.</p>
+          </form>
+        </div>
+      </div>
+
+      <!-- Side panel: What happens next -->
+      <div class="lg:col-span-5">
+        <div class="glass rounded-3xl p-8 border border-white/10 h-full flex flex-col">
+          <div>
+            <div class="text-xs tracking-[2px] text-[#39ff14] mb-1">WHAT HAPPENS NEXT</div>
+            <div class="text-3xl leading-none tracking-tight font-semibold">Instant connection.<br>Real conversations.</div>
+          </div>
+
+          <div class="flex-1 mt-10 space-y-6 text-sm">
+            <div class="flex gap-4">
+              <div class="w-6 h-6 rounded-full bg-[#00e5ff] text-[#05070f] flex items-center justify-center flex-shrink-0 text-xs font-bold mt-0.5">1</div>
+              <div>
+                <div class="font-medium">Submit the form</div>
+                <div class="text-white/55">We instantly prepare a detailed lead message.</div>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-6 h-6 rounded-full bg-[#00e5ff] text-[#05070f] flex items-center justify-center flex-shrink-0 text-xs font-bold mt-0.5">2</div>
+              <div>
+                <div class="font-medium">Send to our WhatsApp</div>
+                <div class="text-white/55">One tap opens WhatsApp with everything pre-filled. We reply fast.</div>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-6 h-6 rounded-full bg-[#00e5ff] text-[#05070f] flex items-center justify-center flex-shrink-0 text-xs font-bold mt-0.5">3</div>
+              <div>
+                <div class="font-medium">We follow up by call or email</div>
+                <div class="text-white/55">Get a custom proposal + invitation to the Experience Center.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-7 mt-auto border-t border-white/10 text-xs text-white/50">
+            Prefer to talk now? <a href="index.html#visit" class="text-[#00e5ff] hover:underline">Visit the Experience Center page</a> for our number.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUCCESS STATE (hidden until submit) -->
+    <div id="success-panel" class="hidden mt-8">
+      <div class="glass rounded-3xl p-9 border border-[#39ff14]/30 max-w-3xl">
+        <div class="flex items-start gap-5">
+          <div class="w-16 h-16 rounded-2xl bg-[#39ff14] flex items-center justify-center flex-shrink-0 success-check">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-9 h-9 text-[#05070f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            </svg>
+          </div>
+          <div class="flex-1 pt-1">
+            <div class="font-semibold text-4xl tracking-[-1.4px]">Thank you. Lead received.</div>
+            <div class="text-white/70 mt-3 text-[15px]">Your enquiry has been captured. Click the button below to instantly send the complete details to our WhatsApp. We usually reply within 1–2 hours during business days.</div>
+
+            <!-- WhatsApp Action -->
+            <div class="mt-8">
+              <button onclick="sendToWhatsApp()"
+                      class="w-full sm:w-auto flex items-center justify-center gap-x-3 bg-[#25D366] hover:bg-[#128C7E] transition-colors font-semibold text-lg px-9 py-4 rounded-3xl text-white active:scale-[0.985]">
+                <span>OPEN WHATSAPP WITH DETAILS →</span>
+              </button>
+              <div class="text-center text-xs text-white/40 mt-3">Opens in a new tab with pre-filled message</div>
+            </div>
+
+            <!-- Email action -->
+            <div class="mt-5 flex flex-col sm:flex-row gap-3">
+              <button onclick="sendViaEmail()"
+                      class="flex-1 px-8 py-3 rounded-2xl border border-white/30 hover:bg-white/5 transition text-sm font-medium">
+                SEND VIA EMAIL (mailto)
+              </button>
+              
+              <button onclick="copyLeadToClipboard()"
+                      class="flex-1 px-8 py-3 rounded-2xl border border-white/30 hover:bg-white/5 transition text-sm font-medium">
+                COPY DETAILS TO CLIPBOARD
+              </button>
+            </div>
+
+            <div class="mt-6 text-xs text-white/40">
+              You can also <button onclick="showCapturedLeads()" class="underline hover:text-white">view all captured leads</button> from this browser session.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Captured leads (demo storage) -->
+    <div id="captured-leads" class="hidden mt-10 max-w-3xl">
+      <div class="flex items-center justify-between mb-3 px-1">
+        <div class="text-xs tracking-[2px] text-white/50">LEADS CAPTURED IN THIS BROWSER</div>
+        <button onclick="clearLeads()" class="text-xs text-white/40 hover:text-red-400">CLEAR ALL</button>
+      </div>
+      <div id="leads-list" class="space-y-2 text-sm"></div>
+    </div>
+  </div>
+
+  <script>
+    let selectedPill = null;
+    let currentLead = null;
+
+    function initTailwind() {
+      // Tailwind already loaded via CDN
+    }
+
+    function selectInterest(element, value) {
+      // Deselect all
+      document.querySelectorAll('#interest-pills button').forEach(btn => {
+        btn.classList.remove('pill-active', 'border-[#00e5ff]');
+        btn.classList.add('bg-white/5', 'border-white/20');
+      });
+      
+      // Select this
+      element.classList.add('pill-active', 'border-[#00e5ff]');
+      element.classList.remove('bg-white/5', 'border-white/20');
+      
+      // Update hidden input
+      document.getElementById('interest').value = value;
+      selectedPill = element;
+    }
+
+    function showSuccess(leadData) {
+      currentLead = leadData;
+      
+      // Hide form
+      document.getElementById('lead-form').classList.add('hidden');
+      
+      // Show success
+      const panel = document.getElementById('success-panel');
+      panel.classList.remove('hidden');
+      panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      // Store lead locally
+      saveLeadLocally(leadData);
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      
+      const btnText = document.getElementById('submit-text');
+      const originalText = btnText.textContent;
+      btnText.textContent = 'PREPARING...';
+      
+      // Collect data
+      const lead = {
+        timestamp: new Date().toISOString(),
+        name: document.getElementById('fullName').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        location: document.getElementById('location').value.trim(),
+        interest: document.getElementById('interest').value,
+        capacity: document.getElementById('capacity').value,
+        message: document.getElementById('message').value.trim()
+      };
+      
+      // Simulate short processing (for nice feel)
+      await new Promise(r => setTimeout(r, 620));
+      
+      // Show success UI
+      showSuccess(lead);
+      
+      // Reset button text (in case user goes back)
+      btnText.textContent = originalText;
+    }
+
+    // === WHATSAPP AUTOMATION ===
+    function sendToWhatsApp() {
+      if (!currentLead) return;
+      
+      const waNumber = "919876543210"; // <<< CHANGE THIS TO REAL WHATSAPP NUMBER (with country code, no +)
+      
+      let text = `New lead from EnergyPoint website\n\n`;
+      text += `Name: ${currentLead.name}\n`;
+      text += `Phone: ${currentLead.phone}\n`;
+      if (currentLead.email) text += `Email: ${currentLead.email}\n`;
+      text += `Location: ${currentLead.location}\n`;
+      text += `Interest: ${currentLead.interest}\n`;
+      if (currentLead.capacity) text += `Capacity: ${currentLead.capacity}\n`;
+      if (currentLead.message) text += `\nMessage:\n${currentLead.message}\n`;
+      text += `\n---\nSubmitted: ${new Date(currentLead.timestamp).toLocaleString('en-IN')}`;
+      
+      const encoded = encodeURIComponent(text);
+      const url = `https://wa.me/${waNumber}?text=${encoded}`;
+      
+      window.open(url, '_blank');
+      
+      // Optional: subtle confirmation
+      const orig = event.currentTarget;
+      setTimeout(() => {
+        // Could show "Message sent to WhatsApp" toast if wanted
+      }, 800);
+    }
+
+    // Email via mailto (client side)
+    function sendViaEmail() {
+      if (!currentLead) return;
+      
+      let body = `New EnergyPoint Lead\n\n`;
+      body += `Name: ${currentLead.name}\n`;
+      body += `Phone / WA: ${currentLead.phone}\n`;
+      body += `Email: ${currentLead.email || '(not provided)'}\n`;
+      body += `Location: ${currentLead.location}\n`;
+      body += `Interest: ${currentLead.interest}\n`;
+      if (currentLead.capacity) body += `Capacity Needed: ${currentLead.capacity}\n`;
+      if (currentLead.message) body += `\nMessage from customer:\n${currentLead.message}\n`;
+      body += `\n---\nSubmitted via website: ${new Date(currentLead.timestamp).toLocaleString()}`;
+      
+      const subject = encodeURIComponent(`New EnergyPoint Lead - ${currentLead.name} (${currentLead.interest})`);
+      const mailto = `mailto:hello@energypoint.in?subject=${subject}&body=${encodeURIComponent(body)}`;
+      
+      window.location.href = mailto;
+    }
+
+    function copyLeadToClipboard() {
+      if (!currentLead) return;
+      
+      let text = `EnergyPoint Lead\n`;
+      text += `Name: ${currentLead.name}\n`;
+      text += `Phone: ${currentLead.phone}\n`;
+      text += `Email: ${currentLead.email || 'N/A'}\n`;
+      text += `Location: ${currentLead.location}\n`;
+      text += `Interest: ${currentLead.interest}\n`;
+      if (currentLead.capacity) text += `Capacity: ${currentLead.capacity}\n`;
+      if (currentLead.message) text += `Notes: ${currentLead.message}\n`;
+      
+      navigator.clipboard.writeText(text).then(() => {
+        const origText = event.target.innerText;
+        event.target.innerText = 'COPIED!';
+        setTimeout(() => {
+          if (event.target) event.target.innerText = origText;
+        }, 1800);
+      }).catch(() => {
+        // Fallback
+        prompt("Copy this lead:", text);
+      });
+    }
+
+    // Local storage for leads (useful for demo / offline capture)
+    function saveLeadLocally(lead) {
+      let leads = JSON.parse(localStorage.getItem('energypoint_leads') || '[]');
+      leads.unshift(lead); // newest first
+      localStorage.setItem('energypoint_leads', JSON.stringify(leads));
+    }
+
+    function showCapturedLeads() {
+      const section = document.getElementById('captured-leads');
+      const list = document.getElementById('leads-list');
+      section.classList.remove('hidden');
+      
+      const leads = JSON.parse(localStorage.getItem('energypoint_leads') || '[]');
+      
+      if (leads.length === 0) {
+        list.innerHTML = `<div class="text-white/50 px-1">No leads captured yet in this browser.</div>`;
+        return;
+      }
+      
+      list.innerHTML = leads.map((lead, idx) => {
+        const date = new Date(lead.timestamp).toLocaleDateString('en-IN', { 
+          day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
+        });
+        
+        return `
+          <div class="lead-card glass border border-white/10 rounded-2xl p-4 text-xs">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="font-medium text-base">${lead.name}</span>
+                <span class="text-white/40 ml-2">• ${lead.interest}</span>
+              </div>
+              <div class="text-white/40">${date}</div>
+            </div>
+            <div class="mt-2 text-white/70">
+              ${lead.phone} • ${lead.location}
+              ${lead.email ? ` • ${lead.email}` : ''}
+            </div>
+            ${lead.message ? `<div class="mt-2 text-white/60 line-clamp-2">“${lead.message}”</div>` : ''}
+            <div class="mt-3 flex gap-2">
+              <button onclick="reopenWhatsApp(${idx})" class="text-[11px] px-3 py-1 rounded-xl bg-[#25D366]/90 text-white">WhatsApp</button>
+              <button onclick="reopenEmail(${idx})" class="text-[11px] px-3 py-1 rounded-xl border border-white/30">Email</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function reopenWhatsApp(index) {
+      const leads = JSON.parse(localStorage.getItem('energypoint_leads') || '[]');
+      const lead = leads[index];
+      if (!lead) return;
+      
+      currentLead = lead;
+      const waNumber = "919876543210"; // <<< SAME NUMBER AS ABOVE
+      
+      let text = `New lead from EnergyPoint website\n\n`;
+      text += `Name: ${lead.name}\nPhone: ${lead.phone}\n`;
+      if (lead.email) text += `Email: ${lead.email}\n`;
+      text += `Location: ${lead.location}\nInterest: ${lead.interest}\n`;
+      if (lead.capacity) text += `Capacity: ${lead.capacity}\n`;
+      if (lead.message) text += `\nMessage: ${lead.message}\n`;
+      
+      window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function reopenEmail(index) {
+      const leads = JSON.parse(localStorage.getItem('energypoint_leads') || '[]');
+      const lead = leads[index];
+      if (!lead) return;
+      
+      currentLead = lead;
+      sendViaEmail();
+    }
+
+    function clearLeads() {
+      if (confirm('Clear all captured leads from this browser?')) {
+        localStorage.removeItem('energypoint_leads');
+        document.getElementById('leads-list').innerHTML = '';
+        document.getElementById('captured-leads').classList.add('hidden');
+      }
+    }
+
+    // Pre-select first interest option on load
+    function initFormDefaults() {
+      const firstPill = document.querySelector('#interest-pills button');
+      if (firstPill) {
+        firstPill.classList.add('pill-active', 'border-[#00e5ff]');
+        firstPill.classList.remove('bg-white/5', 'border-white/20');
+        document.getElementById('interest').value = 'Residential';
+        selectedPill = firstPill;
+      }
+      
+      // Keyboard enter hint on form
+      const form = document.getElementById('lead-form');
+      form.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.tagName === 'TEXTAREA') {
+          // allow normal enter in textarea
+          return;
+        }
+        if (e.key === 'Enter') {
+          // let default submit happen
+        }
+      });
+    }
+
+    // Small GSAP entrance
+    function initAnimations() {
+      if (typeof gsap !== 'undefined') {
+        gsap.fromTo('.glass.rounded-3xl', 
+          { opacity: 0.6, y: 18 }, 
+          { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out', delay: 0.1 }
+        );
+      }
+    }
+
+    function init() {
+      initTailwind();
+      initFormDefaults();
+      initAnimations();
+      
+      // Optional: prefill for testing (remove in production)
+      // document.getElementById('fullName').value = 'Test User';
+      // document.getElementById('phone').value = '+91 98765 43210';
+      // document.getElementById('location').value = 'Kochi';
+    }
+
+    window.onload = init;
+    
+    // Dev note:
+    // To make WhatsApp + Email fully automatic without user clicking:
+    // 1. Use EmailJS (client-side) or a real backend (Node + Nodemailer)
+    // 2. For WhatsApp, use the WhatsApp Business Cloud API (requires Meta approval + number)
+    // Currently the site gives the smoothest possible experience with one-click WhatsApp.
+  </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+._*
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Dependencies (if added later)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment / secrets
+.env
+.env.local
+*.pem
+*.key
+
+# Build / temp (future-proof)
+dist/
+build/
+*.log
+
+# OS generated
+Thumbs.db
