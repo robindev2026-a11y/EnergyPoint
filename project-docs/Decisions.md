@@ -55,3 +55,21 @@ Important decisions and their rationale.
 - Real product photography only: Lacks the interactive "multi-layer" exploration the client specifically requested.
 
 **Tradeoffs:** Visuals are stylized rather than photorealistic. This can be supplemented later with real photos in a gallery section.
+
+## 2025-06-14 - Publish to GitHub
+
+**Decision:** Initialize git, commit all current work, and publish the repository publicly on GitHub under the name "EnergyPoint" using GitHub CLI.
+
+**Context:** The project reached a complete, self-contained, high-fidelity state (interactive landing + form with WhatsApp automation + full AI Root System docs) and needed to be version-controlled and shared.
+
+**Rationale:**
+- Provides proper source control and history.
+- Makes it easy for the client to access, fork, or collaborate.
+- Follows professional practice and the AI Root System post-task protocol.
+- Public repo allows easy preview via GitHub Pages later if desired.
+
+**Alternatives considered:**
+- Private repo: Less discoverable and harder for client to access quickly.
+- Delay publishing until more polish: Unnecessary since the core experience is already strong and functional.
+
+**Tradeoffs:** The repo name "EnergyPoint" is simple and matches the project/brand. Placeholder contact details remain until the client provides real information.

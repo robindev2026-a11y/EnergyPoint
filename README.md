@@ -57,4 +57,8 @@ All project knowledge lives in `project-docs/`:
 
 **Before doing significant work on this project, the AI (or human) must read the documents listed in `project-docs/AI.md`.**
 
+## Repository
+
+**GitHub:** https://github.com/robindev2026-a11y/EnergyPoint
+
 Built for impact. Let's make it feel like the future of energy in Kerala.
