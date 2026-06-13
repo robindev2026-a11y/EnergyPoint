@@ -61,4 +61,10 @@ All project knowledge lives in `project-docs/`:
 
 **GitHub:** https://github.com/robindev2026-a11y/EnergyPoint
 
+## Live Website
+
+The site is published publicly via **GitHub Pages** and accessible to anyone:
+
+**Live Demo:** https://robindev2026-a11y.github.io/EnergyPoint/
+
 Built for impact. Let's make it feel like the future of energy in Kerala.
