@@ -32,6 +32,12 @@ The site uses a "futuristic experience center" metaphor delivered entirely throu
 - **Map**
   - Leaflet.js + OpenStreetMap (CDN, no API key)
 
+- **Deployment**
+  - GitHub repository: `https://github.com/robindev2026-a11y/EnergyPoint`
+  - Public site: `https://robindev2026-a11y.github.io/EnergyPoint/`
+  - GitHub Actions workflow: `.github/workflows/deploy-pages.yml`
+  - Deployment trigger: pushes to `main` and manual `workflow_dispatch`
+
 ## Data Flow
 
 - All data is client-side only.
@@ -43,6 +49,7 @@ The site uses a "futuristic experience center" metaphor delivered entirely throu
   5. Also persisted to `localStorage` under `energypoint_leads`.
 
 - No backend, database, or API calls (except map tile loading).
+- Deployment uploads the static project root as the GitHub Pages artifact.
 
 ## Module Boundaries
 
@@ -56,6 +63,7 @@ The site uses a "futuristic experience center" metaphor delivered entirely throu
 - GSAP 3.12.5 + ScrollTrigger (cdnjs)
 - Leaflet 1.9.4 (unpkg)
 - OpenStreetMap tiles
+- GitHub Pages / GitHub Actions for static hosting
 
 ## Architectural Decisions
 

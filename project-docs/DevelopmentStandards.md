@@ -20,9 +20,10 @@ Project-specific engineering standards for the EnergyPoint website.
 ## Folder Structure
 
 Current (lightweight):
-- `/` — `index.html`, `form.html`, `README.md`
+- `/` — `index.html`, `form.html`, `README.md`, `VERSION`, `AI_ALIGNMENT_REPORT.md`
 - `/project-docs/` — All AI Root System knowledge files
-- `/assets/` — Reserved for future images, css, js (currently mostly empty)
+- `/.github/workflows/` — GitHub Pages deployment workflow
+- `/assets/` — Reserved for future images, css, js, with `assets/README.md` documenting the intended folders
 
 When adding real assets later, organize under `assets/images/`, `assets/css/`, etc.
 
@@ -32,6 +33,7 @@ When adding real assets later, organize under `assets/images/`, `assets/css/`, e
 - Test on mobile (responsive behavior of Experience Center, form, comparison).
 - Always verify that interactive elements (layer clicks, environment switches, hero battery, form submission) continue to work after changes.
 - No automated test suite at this stage.
+- For deployment-related changes, verify the GitHub Pages workflow still uploads the intended static root.
 
 ## Commits
 
@@ -45,4 +47,5 @@ When adding real assets later, organize under `assets/images/`, `assets/css/`, e
 - Prefer enhancing existing interactive sections over creating new pages.
 - When modifying form logic, protect the quality and completeness of the WhatsApp prefilled message.
 - After any non-trivial change, update the relevant project-docs files (especially AIContext.md, Decisions.md, and Architecture.md if structural).
+- Record meaningful chronological changes in `project-docs/CHANGELOG.md`.
 - Keep the "multi-layer experience center" feeling as the primary creative constraint for new features.

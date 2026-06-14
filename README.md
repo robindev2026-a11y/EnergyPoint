@@ -7,6 +7,8 @@ This is a high-end, futuristic two-page website:
 - **index.html** — Stunning animated landing page with interactive infographics, comparison tools, and a multi-layer "Experience Center" explorer.
 - **form.html** — Premium lead capture form. Submissions prepare a rich message for WhatsApp and provide email options.
 
+Current version: **1.0.0**
+
 ## Key Features (as requested)
 - Heavy JavaScript + GSAP-powered animations for a true futuristic experience center feel.
 - Interactive "Why Lithium-ion vs Traditional" infographic with live-animating metrics.
@@ -54,8 +56,15 @@ All project knowledge lives in `project-docs/`:
 - `KnownIssues.md`
 - `PlannedFeatures.md`
 - `DeferredWork.md`
+- `CHANGELOG.md`
+
+The project inherits the AI Root System from:
+
+`/Users/robingeorge/Documents/Projects/AI-Root-System`
 
 **Before doing significant work on this project, the AI (or human) must read the documents listed in `project-docs/AI.md`.**
+
+The latest alignment review is recorded in `AI_ALIGNMENT_REPORT.md`.
 
 ## Repository
 

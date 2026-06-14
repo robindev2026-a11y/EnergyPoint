@@ -73,3 +73,22 @@ Important decisions and their rationale.
 - Delay publishing until more polish: Unnecessary since the core experience is already strong and functional.
 
 **Tradeoffs:** The repo name "EnergyPoint" is simple and matches the project/brand. Placeholder contact details remain until the client provides real information.
+
+## 2025-06-14 - Deploy Static Site With GitHub Pages Workflow
+
+**Decision:** Use a GitHub Actions workflow (`.github/workflows/deploy-pages.yml`) to publish the static project root to GitHub Pages from the `main` branch.
+
+**Context:** The repository was already public and needed a reliable live demo URL without adding a backend, build step, or hosting vendor.
+
+**Rationale:**
+- GitHub Pages matches the project's static architecture.
+- Deploying the root preserves the zero-build workflow for `index.html` and `form.html`.
+- The workflow makes deployment repeatable after future commits.
+- The live demo can be shared at `https://robindev2026-a11y.github.io/EnergyPoint/`.
+
+**Alternatives considered:**
+- Manual Pages publishing: simpler initially, but easier to drift or misconfigure.
+- Netlify/Vercel: good options, but unnecessary for a static two-page site with no build step.
+- Backend hosting: not justified until real server-side lead capture is added.
+
+**Tradeoffs:** Project documentation files are part of the uploaded root artifact unless excluded later. This is acceptable while the repository is public and docs contain no secrets.

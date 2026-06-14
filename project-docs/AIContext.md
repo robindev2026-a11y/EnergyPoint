@@ -22,6 +22,8 @@ The EnergyPoint website is a two-page static marketing site for a lithium-ion ba
 
 Current implementation is self-contained (no build step). Can be opened directly in a browser.
 
+The public repository is `https://github.com/robindev2026-a11y/EnergyPoint`, and the live GitHub Pages site is `https://robindev2026-a11y.github.io/EnergyPoint/`. Deployment is handled by `.github/workflows/deploy-pages.yml` on pushes to `main`.
+
 ## Active Priorities
 
 1. Replace all placeholder contact information (WhatsApp number, address, phone, email) with real business details.
@@ -50,6 +52,7 @@ Current implementation is self-contained (no build step). Can be opened directly
 
 - `index.html` — main landing + all interactive components (hero battery, comparison logic, Experience Center layers/environments, map)
 - `form.html` — lead form, submission handler, WhatsApp/email automation
+- `.github/workflows/deploy-pages.yml` — static GitHub Pages deployment from `main`
 - `project-docs/` — all AI Root System documentation (this folder)
 
 ## AI Operating Notes
