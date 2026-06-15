@@ -4,181 +4,521 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EnergyPoint • Kerala's Lithium-ion Experience Center</title>
+  <meta name="description" content="EnergyPoint is Kerala's first lithium-ion battery experience center. See, feel, and understand the future of energy storage. Book your private tour today.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
-    
+    /* ─── DESIGN TOKENS ─────────────────────────────── */
     :root {
       --cyan: #00e5ff;
       --lime: #39ff14;
+      --bg: #05070f;
+      --bg2: #0a0f1e;
+      --glass: rgba(10, 15, 30, 0.75);
+      --border: rgba(0, 229, 255, 0.12);
     }
-    
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
     body {
-      font-family: 'Inter', system_ui, sans-serif;
-    }
-    
-    .font-display {
-      font-family: 'Space Grotesk', 'Inter', system_ui, sans-serif;
-      font-feature-settings: "ss02";
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+      cursor: none;
     }
 
+    @media (max-width: 768px) { body { cursor: auto; } }
+
+    .font-display { font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif; }
+
+    /* ─── LOADER ─────────────────────────────────────── */
+    #loader {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: opacity 0.7s ease, visibility 0.7s ease;
+    }
+    #loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+    .loader-logo {
+      width: 56px; height: 56px;
+      border-radius: 1rem;
+      background: linear-gradient(135deg, var(--cyan), var(--lime));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 1.5rem;
+      color: var(--bg);
+      margin-bottom: 1.5rem;
+      animation: loader-pulse 1s ease-in-out infinite;
+    }
+    @keyframes loader-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0,229,255,0.4); }
+      50% { box-shadow: 0 0 0 16px rgba(0,229,255,0); }
+    }
+
+    .loader-bar-track {
+      width: 160px; height: 2px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 99px; overflow: hidden;
+      margin-top: 1rem;
+    }
+    .loader-bar-fill {
+      height: 100%;
+      background: linear-gradient(to right, var(--cyan), var(--lime));
+      border-radius: 99px;
+      width: 0%;
+      transition: width 0.05s linear;
+    }
+    .loader-label {
+      margin-top: 0.75rem;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.35);
+    }
+
+    /* ─── CURSOR ─────────────────────────────────────── */
+    #cursor-glow {
+      position: fixed;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,229,255,0.8) 0%, rgba(0,229,255,0) 70%);
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: transform 0.05s linear, opacity 0.3s;
+    }
+    #cursor-trail {
+      position: fixed;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+      pointer-events: none;
+      z-index: 9997;
+      transform: translate(-50%, -50%);
+      opacity: 0.7;
+      transition: transform 0.12s ease-out, opacity 0.3s;
+    }
+    @media (max-width: 768px) {
+      #cursor-glow, #cursor-trail { display: none; }
+    }
+
+    /* ─── SCROLL PROGRESS ────────────────────────────── */
+    .scroll-progress {
+      position: fixed; top: 0; left: 0; height: 2px;
+      background: linear-gradient(to right, var(--cyan), var(--lime));
+      z-index: 200;
+      transition: width 0.1s ease-out;
+    }
+
+    /* ─── NAV ────────────────────────────────────────── */
+    .nav-glass {
+      background: rgba(5, 7, 15, 0);
+      backdrop-filter: blur(0px);
+      border-bottom: 1px solid rgba(255,255,255,0);
+      transition: background 0.4s ease, backdrop-filter 0.4s ease, border-color 0.4s ease;
+    }
+    .nav-glass.scrolled {
+      background: rgba(5, 7, 15, 0.85);
+      backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* ─── HERO ───────────────────────────────────────── */
     .futuristic-bg {
-      background: radial-gradient(circle at 50% 20%, #0a0f1e 0%, #05070f 100%);
+      background: radial-gradient(ellipse at 30% 10%, #0a1628 0%, #05070f 55%, #040508 100%);
+      position: relative;
     }
 
+    /* Noise texture */
+    .futuristic-bg::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Particle canvas */
+    #hero-canvas {
+      position: absolute; inset: 0;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* Floating orbs */
+    .hero-orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px); pointer-events: none; z-index: 0;
+    }
+    .orb-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(0,229,255,0.08) 0%, transparent 70%);
+      top: -200px; right: -100px;
+      animation: orb-drift-1 14s ease-in-out infinite;
+    }
+    .orb-2 {
+      width: 380px; height: 380px;
+      background: radial-gradient(circle, rgba(57,255,20,0.06) 0%, transparent 70%);
+      bottom: 50px; left: 10%;
+      animation: orb-drift-2 18s ease-in-out infinite;
+    }
+    .orb-3 {
+      width: 280px; height: 280px;
+      background: radial-gradient(circle, rgba(0,229,255,0.05) 0%, transparent 70%);
+      top: 40%; left: 40%;
+      animation: orb-drift-3 22s ease-in-out infinite;
+    }
+    @keyframes orb-drift-1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(-30px, 40px) scale(1.05); }
+      66% { transform: translate(20px, -20px) scale(0.95); }
+    }
+    @keyframes orb-drift-2 {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(40px, -50px); }
+    }
+    @keyframes orb-drift-3 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      40% { transform: translate(-25px, 30px) scale(1.1); }
+      80% { transform: translate(15px, -20px) scale(0.9); }
+    }
+
+    /* ─── HERO BADGE ─────────────────────────────────── */
+    .hero-badge {
+      position: relative; overflow: hidden;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0 1rem; height: 2rem; border-radius: 99px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      font-size: 0.7rem; letter-spacing: 0.15em; font-weight: 500;
+    }
+    .hero-badge::after {
+      content: '';
+      position: absolute; top: -50%; left: -60%;
+      width: 35%; height: 200%;
+      background: linear-gradient(120deg, transparent 20%, rgba(255,255,255,0.25) 50%, transparent 80%);
+      transform: skewX(-20deg);
+      animation: badge-shimmer 3.5s ease-in-out infinite;
+    }
+    @keyframes badge-shimmer {
+      0% { left: -60%; }
+      40% { left: 130%; }
+      100% { left: 130%; }
+    }
+
+    /* ─── TYPEWRITER ─────────────────────────────────── */
+    .typewriter-cursor {
+      display: inline-block;
+      width: 3px; height: 0.85em;
+      background: var(--cyan);
+      margin-left: 4px;
+      vertical-align: middle;
+      border-radius: 2px;
+      animation: blink-cursor 0.8s step-end infinite;
+    }
+    @keyframes blink-cursor {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* ─── GLASS ──────────────────────────────────────── */
     .glass {
-      background: rgba(10, 15, 30, 0.75);
+      background: var(--glass);
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(0, 229, 255, 0.15);
+      border: 1px solid var(--border);
     }
 
+    /* ─── NEON GLOWS ─────────────────────────────────── */
     .neon-cyan {
-      box-shadow: 0 0 10px rgba(0, 229, 255, 0.4),
-                  0 0 30px rgba(0, 229, 255, 0.2);
+      box-shadow: 0 0 10px rgba(0,229,255,0.4), 0 0 30px rgba(0,229,255,0.2);
+    }
+    .battery-glow {
+      box-shadow: 0 0 25px rgba(0,229,255,0.5), inset 0 0 30px rgba(0,229,255,0.15);
     }
 
-    .neon-lime {
-      box-shadow: 0 0 10px rgba(57, 255, 20, 0.4),
-                  0 0 30px rgba(57, 255, 20, 0.15);
-    }
-
-    .section-header {
-      letter-spacing: -0.025em;
-    }
-
-    .metric-bar {
-      transition: width 1.2s cubic-bezier(0.23, 1, 0.32, 1);
-    }
-
-    .battery-shell {
-      transition: all 0.4s cubic-bezier(0.23, 1.0, 0.32, 1);
-    }
-
-    .layer-active {
-      border-color: #00e5ff;
-      box-shadow: 0 0 0 1px #00e5ff,
-                  0 0 20px rgba(0, 229, 255, 0.4);
-      transform: translateY(-1px);
-    }
-
-    .energy-flow {
-      animation: energy-flow 1.8s linear infinite;
-    }
-
+    /* ─── ENERGY FLOW ────────────────────────────────── */
+    .energy-flow { animation: energy-flow 1.8s linear infinite; }
     @keyframes energy-flow {
       0% { stroke-dashoffset: 40; }
       100% { stroke-dashoffset: 0; }
     }
 
-    .stat-number {
-      font-variant-numeric: tabular-nums;
-    }
-
-    .futuristic-card {
-      transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1), 
-                  box-shadow 0.3s cubic-bezier(0.23, 1, 0.32, 1),
-                  border-color 0.3s ease;
-    }
-
-    .futuristic-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 
-                  0 8px 10px -6px rgb(0 0 0 / 0.1);
-      border-color: rgba(0, 229, 255, 0.3);
-    }
-
-    .layer-visual {
-      transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-    }
-
-    .nav-active {
-      color: #00e5ff;
-      position: relative;
-    }
-    
-    .nav-active:after {
-      content: '';
-      position: absolute;
-      bottom: -2px;
-      left: 0;
-      width: 100%;
-      height: 1px;
-      background: linear-gradient(to right, transparent, #00e5ff, transparent);
-    }
-
-    .data-label {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      letter-spacing: 0.05em;
-    }
-
-    .premium-gradient {
-      background: linear-gradient(135deg, #00e5ff 0%, #39ff14 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
+    /* ─── HOLO CARD ──────────────────────────────────── */
     .holo {
-      position: relative;
-      overflow: hidden;
+      position: relative; overflow: hidden;
     }
-    
     .holo::after {
       content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 40%;
-      height: 300%;
-      background: linear-gradient(
-        120deg,
-        transparent 20%,
-        rgba(255,255,255,0.35) 50%,
-        transparent 80%
-      );
+      position: absolute; top: -50%; left: -50%;
+      width: 40%; height: 300%;
+      background: linear-gradient(120deg, transparent 20%, rgba(255,255,255,0.28) 50%, transparent 80%);
       transform: skewX(-25deg);
-      animation: holo-sweep 3.5s infinite;
+      animation: holo-sweep 4s infinite;
     }
-
     @keyframes holo-sweep {
       0% { transform: translateX(-150%) skewX(-25deg); }
       30% { transform: translateX(400%) skewX(-25deg); }
       100% { transform: translateX(400%) skewX(-25deg); }
     }
 
-    .battery-glow {
-      box-shadow: 0 0 25px rgba(0, 229, 255, 0.5),
-                  inset 0 0 30px rgba(0, 229, 255, 0.15);
+    /* ─── STATS COUNTER BAR ──────────────────────────── */
+    .stat-counter {
+      font-variant-numeric: tabular-nums;
     }
 
-    .scroll-progress {
-      position: fixed;
-      top: 0;
-      left: 0;
+    /* ─── STATS BAR ──────────────────────────────────── */
+    .stats-bar-divider {
+      width: 1px; height: 40px;
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.2), transparent);
+    }
+
+    /* ─── TECH STRIP ─────────────────────────────────── */
+    .tech-pill {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 1.2rem; border-radius: 99px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.03);
+      font-size: 0.8rem; white-space: nowrap;
+      transition: border-color 0.3s, background 0.3s, transform 0.3s;
+      cursor: default;
+    }
+    .tech-pill:hover {
+      border-color: rgba(0,229,255,0.4);
+      background: rgba(0,229,255,0.06);
+      transform: translateY(-2px);
+    }
+    .tech-pill-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+    }
+
+    /* ─── MARQUEE ────────────────────────────────────── */
+    .marquee-track {
+      display: flex; overflow: hidden;
+      mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+    }
+    .marquee-content {
+      display: flex; gap: 1rem; flex-shrink: 0;
+      animation: marquee-scroll 28s linear infinite;
+    }
+    .marquee-content:nth-child(2) { animation-delay: -14s; }
+    @keyframes marquee-scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+    .marquee-track:hover .marquee-content { animation-play-state: paused; }
+
+    /* ─── TESTIMONIALS ───────────────────────────────── */
+    .testimonial-card {
+      flex-shrink: 0;
+      width: 320px;
+      background: rgba(10,15,30,0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .testimonial-card:hover {
+      border-color: rgba(0,229,255,0.25);
+      transform: translateY(-3px);
+    }
+
+    /* ─── FUTURISTIC CARD ────────────────────────────── */
+    .futuristic-card {
+      transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+                  box-shadow 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+                  border-color 0.3s ease;
+      transform-style: preserve-3d;
+    }
+    .futuristic-card:hover {
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 25px rgba(0,229,255,0.08);
+      border-color: rgba(0,229,255,0.25) !important;
+    }
+
+    /* ─── BENEFIT CARD ───────────────────────────────── */
+    .benefit-card {
+      position: relative; overflow: hidden;
+      transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1),
+                  border-color 0.3s ease,
+                  box-shadow 0.3s ease;
+    }
+    .benefit-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(to right, var(--cyan), var(--lime));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .benefit-card:hover::before { opacity: 1; }
+    .benefit-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(0,229,255,0.2) !important;
+      box-shadow: 0 16px 32px rgba(0,0,0,0.25);
+    }
+
+    /* ─── BUTTON RIPPLE ──────────────────────────────── */
+    .btn-ripple { position: relative; overflow: hidden; }
+    .ripple-effect {
+      position: absolute; border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+      transform: scale(0);
+      animation: ripple-animate 0.55s ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes ripple-animate {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    /* ─── LAYER CONTROLS ─────────────────────────────── */
+    .layer-active {
+      border-color: var(--cyan) !important;
+      box-shadow: 0 0 0 1px var(--cyan), 0 0 20px rgba(0,229,255,0.4);
+      transform: translateY(-1px);
+    }
+    .battery-shell { transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); }
+
+    /* ─── METRIC BAR ─────────────────────────────────── */
+    .metric-bar { transition: width 1.2s cubic-bezier(0.23, 1, 0.32, 1); }
+    .metric-row { transition: all 0.4s ease; }
+
+    /* ─── NAV ACTIVE ─────────────────────────────────── */
+    .nav-active {
+      color: var(--cyan);
+      position: relative;
+    }
+    .nav-active:after {
+      content: '';
+      position: absolute; bottom: -2px; left: 0;
+      width: 100%; height: 1px;
+      background: linear-gradient(to right, transparent, var(--cyan), transparent);
+    }
+
+    /* ─── MISC ───────────────────────────────────────── */
+    .data-label {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+      letter-spacing: 0.05em;
+    }
+    .premium-gradient {
+      background: linear-gradient(135deg, var(--cyan) 0%, var(--lime) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* ─── SCROLL TO TOP ──────────────────────────────── */
+    #scroll-top-btn {
+      position: fixed; bottom: 2rem; right: 2rem;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: rgba(10,15,30,0.9);
+      border: 1px solid rgba(0,229,255,0.3);
+      backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 150;
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.3s, transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+    }
+    #scroll-top-btn.visible { opacity: 1; transform: translateY(0); }
+    #scroll-top-btn:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 0 16px rgba(0,229,255,0.4);
+    }
+
+    /* ─── SCROLL REVEAL ──────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.7s cubic-bezier(0.23, 1, 0.32, 1),
+                  transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .reveal.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-left {
+      opacity: 0;
+      transform: translateX(-32px);
+      transition: opacity 0.7s cubic-bezier(0.23, 1, 0.32, 1),
+                  transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .reveal-left.revealed { opacity: 1; transform: translateX(0); }
+    .reveal-right {
+      opacity: 0;
+      transform: translateX(32px);
+      transition: opacity 0.7s cubic-bezier(0.23, 1, 0.32, 1),
+                  transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .reveal-right.revealed { opacity: 1; transform: translateX(0); }
+
+    /* stagger delays */
+    .reveal-delay-1 { transition-delay: 0.08s; }
+    .reveal-delay-2 { transition-delay: 0.16s; }
+    .reveal-delay-3 { transition-delay: 0.24s; }
+    .reveal-delay-4 { transition-delay: 0.32s; }
+    .reveal-delay-5 { transition-delay: 0.40s; }
+    .reveal-delay-6 { transition-delay: 0.48s; }
+
+    /* ─── FOOTER ─────────────────────────────────────── */
+    .footer-gradient-border {
       height: 1px;
-      background: linear-gradient(to right, #00e5ff, #39ff14);
-      z-index: 100;
-      transition: width 0.1s ease-out;
+      background: linear-gradient(to right, transparent, var(--cyan) 30%, var(--lime) 70%, transparent);
     }
 
-    .metric-row {
-      transition: all 0.4s ease;
+    /* ─── HERO BATTERY ENTRANCE ──────────────────────── */
+    #hero-battery-wrapper {
+      opacity: 0;
+      transform: translateX(40px) scale(0.95);
+      transition: opacity 0.9s cubic-bezier(0.23, 1, 0.32, 1),
+                  transform 0.9s cubic-bezier(0.23, 1, 0.32, 1);
+      transition-delay: 0.6s;
     }
+    #hero-battery-wrapper.entered { opacity: 1; transform: translateX(0) scale(1); }
   </style>
 </head>
 <body class="bg-[#05070f] text-white antialiased">
-  <!-- Scroll Progress -->
+
+  <!-- ─── LOADER ──────────────────────────────────────── -->
+  <div id="loader">
+    <div class="loader-logo">EP</div>
+    <div class="text-xs tracking-[3px] text-white/40 font-medium">ENERGYPOINT</div>
+    <div class="loader-bar-track mt-4">
+      <div class="loader-bar-fill" id="loader-bar"></div>
+    </div>
+    <div class="loader-label" id="loader-label">INITIALIZING…</div>
+  </div>
+
+  <!-- ─── CURSOR ─────────────────────────────────────── -->
+  <div id="cursor-glow"></div>
+  <div id="cursor-trail"></div>
+
+  <!-- ─── SCROLL PROGRESS ───────────────────────────── -->
   <div id="scroll-progress" class="scroll-progress w-0"></div>
 
-  <!-- NAV -->
-  <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-white/10">
+  <!-- ─── SCROLL TO TOP ─────────────────────────────── -->
+  <button id="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Scroll to top">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M8 12V4M4 8l4-4 4 4" stroke="#00e5ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <!-- ─── NAV ────────────────────────────────────────── -->
+  <nav id="main-nav" class="fixed top-0 left-0 right-0 z-50 nav-glass">
     <div class="max-w-7xl mx-auto px-6">
       <div class="flex items-center justify-between h-20">
         <div class="flex items-center gap-x-3">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00e5ff] to-[#39ff14] flex items-center justify-center">
-            <span class="text-[#05070f] font-bold text-2xl tracking-tighter font-display">EP</span>
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#00e5ff] to-[#39ff14] flex items-center justify-center holo">
+            <span class="text-[#05070f] font-bold text-xl tracking-tighter font-display">EP</span>
           </div>
           <div>
             <div class="font-semibold tracking-[-1.5px] text-2xl font-display">ENERGYPOINT</div>
@@ -195,20 +535,19 @@
 
         <div class="flex items-center gap-x-3">
           <a href="https://github.com/robindev2026-a11y/EnergyPoint" target="_blank"
-             class="hidden md:flex items-center px-4 py-2 text-xs uppercase tracking-[1.5px] text-white/60 hover:text-white transition-all">
+             class="hidden md:flex items-center px-4 py-2 text-xs uppercase tracking-[1.5px] text-white/50 hover:text-white transition-all">
             GitHub
           </a>
-          <a href="form.html" 
+          <a href="form.html"
              class="hidden sm:flex items-center px-5 py-2.5 rounded-2xl border border-white/20 hover:bg-white/5 text-sm font-medium transition-all active:scale-[0.985]">
             Enquire Now
           </a>
-          <a href="form.html" 
-             class="flex items-center gap-x-2 bg-white text-[#05070f] px-5 py-2.5 rounded-2xl text-sm font-semibold hover:bg-[#00e5ff] active:bg-white transition-all active:scale-[0.985]">
+          <a href="form.html" id="nav-cta"
+             class="btn-ripple flex items-center gap-x-2 bg-white text-[#05070f] px-5 py-2.5 rounded-2xl text-sm font-semibold hover:bg-[#00e5ff] active:bg-white transition-all active:scale-[0.985]">
             <span>Book Experience</span>
           </a>
-          
-          <!-- Mobile menu -->
-          <button class="md:hidden w-10 h-10 flex items-center justify-center rounded-2xl border border-white/20" onclick="toggleMobileMenu()">
+          <!-- Mobile menu button -->
+          <button class="md:hidden w-10 h-10 flex items-center justify-center rounded-2xl border border-white/20" onclick="toggleMobileMenu()" aria-label="Menu">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
@@ -218,75 +557,67 @@
     </div>
   </nav>
 
-  <!-- HERO -->
+  <!-- ─── HERO ────────────────────────────────────────── -->
   <div class="pt-20 min-h-[100dvh] flex items-center futuristic-bg relative overflow-hidden">
-    <div class="max-w-7xl mx-auto px-6 pt-12 pb-16 md:pb-24 grid md:grid-cols-12 gap-10 items-center">
+    <canvas id="hero-canvas"></canvas>
+    <div class="orb-1 hero-orb"></div>
+    <div class="orb-2 hero-orb"></div>
+    <div class="orb-3 hero-orb"></div>
+
+    <div class="max-w-7xl mx-auto px-6 pt-12 pb-16 md:pb-24 grid md:grid-cols-12 gap-10 items-center relative z-10">
       <div class="md:col-span-7 space-y-7">
-        <div class="inline-flex items-center gap-2 px-4 h-8 rounded-3xl bg-white/5 border border-white/10 text-xs tracking-[2px] font-medium">
+        <div class="hero-badge">
           <div class="w-1.5 h-1.5 rounded-full bg-[#39ff14] animate-pulse"></div>
           KERALA'S FIRST EXPERIENCE CENTER
         </div>
 
-        <h1 class="text-7xl md:text-[92px] leading-[0.92] font-semibold tracking-[-5.5px] font-display">
-          THE FUTURE<br>OF ENERGY<br>STORAGE.
+        <h1 id="hero-headline" class="text-7xl md:text-[92px] leading-[0.92] font-semibold tracking-[-5px] font-display">
+          <span id="hero-text"></span><span class="typewriter-cursor" id="hero-cursor"></span>
         </h1>
-        
-        <p class="max-w-md text-xl text-white/70 tracking-tight">
-          Feel the difference. See the technology. 
+
+        <p class="max-w-md text-xl text-white/70 tracking-tight reveal" style="transition-delay:0.2s">
+          Feel the difference. See the technology.
           Experience premium lithium-ion batteries designed for Kerala.
         </p>
 
-        <div class="flex flex-wrap items-center gap-4 pt-4">
-          <a href="#experience" 
-             class="group flex items-center gap-x-3 bg-white text-[#05070f] px-8 py-4 rounded-3xl text-base font-semibold active:scale-[0.985] transition-all">
+        <div class="flex flex-wrap items-center gap-4 pt-4 reveal" style="transition-delay:0.35s">
+          <a href="#experience" id="hero-primary-btn"
+             class="btn-ripple group flex items-center gap-x-3 bg-white text-[#05070f] px-8 py-4 rounded-3xl text-base font-semibold active:scale-[0.985] transition-all hover:bg-[#00e5ff]">
             <span>Enter the Experience Center</span>
-            <span class="group-active:translate-x-0.5 transition">→</span>
+            <span class="group-hover:translate-x-1 transition-transform">→</span>
           </a>
-          <a href="form.html" 
-             class="flex items-center gap-x-3 px-8 py-4 rounded-3xl text-base font-medium border border-white/30 hover:border-white/60 active:bg-white/5 transition-all">
+          <a href="form.html"
+             class="btn-ripple flex items-center gap-x-3 px-8 py-4 rounded-3xl text-base font-medium border border-white/30 hover:border-white/60 active:bg-white/5 transition-all">
             Book a Private Tour
           </a>
         </div>
 
-        <div class="flex items-center gap-x-8 text-sm pt-6">
-          <div>
-            <span class="text-[#39ff14]">●</span> <span class="text-white/60">Zero Maintenance</span>
-          </div>
-          <div>
-            <span class="text-[#39ff14]">●</span> <span class="text-white/60">5-Year Warranty</span>
-          </div>
+        <div class="flex items-center gap-x-8 text-sm pt-6 reveal" style="transition-delay:0.5s">
+          <div><span class="text-[#39ff14]">●</span> <span class="text-white/60">Zero Maintenance</span></div>
+          <div><span class="text-[#39ff14]">●</span> <span class="text-white/60">5-Year Warranty</span></div>
         </div>
       </div>
 
       <!-- Hero Battery Visual -->
-      <div class="md:col-span-5 relative">
-        <div id="hero-battery" 
+      <div class="md:col-span-5 relative" id="hero-battery-wrapper">
+        <div id="hero-battery"
              class="mx-auto w-full max-w-[340px] h-[420px] relative cursor-pointer"
              onclick="chargeHeroBattery()">
-          
-          <!-- Battery Container -->
+
           <div class="absolute inset-0 rounded-[3.5rem] p-[14px] bg-[#0c1224] border border-white/10 shadow-2xl battery-glow">
             <div class="h-full w-full rounded-[2.25rem] bg-[#05070f] overflow-hidden border border-white/10 relative">
-              
-              <!-- Aesthetic metallic top trim -->
               <div class="absolute top-0 left-0 right-0 h-9 bg-gradient-to-b from-white/10 to-transparent"></div>
-              
-              <!-- Brand mark -->
               <div class="absolute top-5 right-6 text-right">
                 <div class="text-[#00e5ff] text-xs tracking-[3px] font-semibold">ENERGYPOINT</div>
                 <div class="text-[10px] text-white/40 -mt-0.5">LFP SERIES</div>
               </div>
-
-              <!-- Cells Grid -->
               <div class="absolute inset-x-6 top-16 bottom-20 grid grid-cols-2 gap-3">
-                <!-- Cell 1 -->
                 <div class="bg-[#111827] rounded-2xl border border-white/10 p-3 flex flex-col">
                   <div class="flex-1 bg-gradient-to-br from-[#00e5ff]/20 to-transparent rounded-xl flex items-center justify-center relative overflow-hidden">
                     <div class="text-[10px] text-[#00e5ff] tracking-[1px] font-mono">LFP-280</div>
                     <div class="absolute bottom-0 left-0 right-0 h-[38%] bg-gradient-to-t from-[#00e5ff] to-transparent opacity-40"></div>
                   </div>
                 </div>
-                <!-- Cell 2 -->
                 <div class="bg-[#111827] rounded-2xl border border-white/10 p-3 flex flex-col">
                   <div class="flex-1 bg-gradient-to-br from-[#39ff14]/20 to-transparent rounded-xl flex items-center justify-center relative overflow-hidden">
                     <div class="text-[10px] text-[#39ff14] tracking-[1px] font-mono">LFP-280</div>
@@ -294,31 +625,24 @@
                   </div>
                 </div>
               </div>
-
-              <!-- Charge Level -->
               <div class="absolute left-6 right-6 bottom-8">
                 <div class="flex justify-between text-[10px] mb-1.5 px-0.5">
                   <div class="text-white/50">CHARGE</div>
                   <div id="hero-charge-text" class="font-mono tabular-nums text-[#00e5ff]">94%</div>
                 </div>
                 <div class="h-3 bg-white/10 rounded-full overflow-hidden">
-                  <div id="hero-charge-bar" 
+                  <div id="hero-charge-bar"
                        class="h-full w-[94%] bg-gradient-to-r from-[#00e5ff] to-[#39ff14] rounded-full transition-all duration-700"
                        style="width: 94%"></div>
                 </div>
               </div>
-
-              <!-- Energy flow lines -->
               <svg class="absolute top-1/2 -translate-y-1/2 left-0 right-0 w-full h-8 opacity-60" viewBox="0 0 300 30">
                 <line x1="30" y1="15" x2="270" y2="15" stroke="#00e5ff" stroke-width="1.5" stroke-dasharray="6 12" class="energy-flow"/>
               </svg>
             </div>
           </div>
-          
-          <!-- Terminal nub -->
           <div class="absolute -top-[1px] left-1/2 -translate-x-1/2 w-16 h-4 bg-[#0c1224] border border-white/10 rounded-b-2xl"></div>
         </div>
-        
         <div class="text-center mt-4">
           <div class="inline-flex items-center text-xs text-white/40 tracking-widest">INTERACTIVE — CLICK TO CHARGE</div>
         </div>
@@ -326,7 +650,7 @@
     </div>
   </div>
 
-  <!-- TRUST BAR -->
+  <!-- ─── TRUST BAR ──────────────────────────────────── -->
   <div class="border-b border-white/10 py-5">
     <div class="max-w-7xl mx-auto px-6">
       <div class="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-xs text-white/40 tracking-[1.5px]">
@@ -340,19 +664,42 @@
     </div>
   </div>
 
-  <!-- WHY LITHIUM vs TRADITIONAL -->
+  <!-- ─── ANIMATED STATS BAR ────────────────────────── -->
+  <div class="border-b border-white/5 py-12 bg-[#070a14]">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="flex flex-wrap items-center justify-center gap-8 md:gap-0 md:divide-x divide-white/10">
+        <div class="text-center md:px-12 reveal">
+          <div class="text-4xl md:text-5xl font-semibold font-display tracking-tight premium-gradient stat-counter" data-target="10" data-suffix="+ Yrs">0</div>
+          <div class="text-xs text-white/50 tracking-[2px] mt-1">DESIGN LIFE</div>
+        </div>
+        <div class="text-center md:px-12 reveal reveal-delay-1">
+          <div class="text-4xl md:text-5xl font-semibold font-display tracking-tight premium-gradient stat-counter" data-target="6000" data-suffix="+">0</div>
+          <div class="text-xs text-white/50 tracking-[2px] mt-1">CHARGE CYCLES</div>
+        </div>
+        <div class="text-center md:px-12 reveal reveal-delay-2">
+          <div class="text-4xl md:text-5xl font-semibold font-display tracking-tight premium-gradient stat-counter" data-target="97" data-suffix="%">0</div>
+          <div class="text-xs text-white/50 tracking-[2px] mt-1">ROUND-TRIP EFFICIENCY</div>
+        </div>
+        <div class="text-center md:px-12 reveal reveal-delay-3">
+          <div class="text-4xl md:text-5xl font-semibold font-display tracking-tight premium-gradient stat-counter" data-target="5" data-suffix=" Yr">0</div>
+          <div class="text-xs text-white/50 tracking-[2px] mt-1">FULL WARRANTY</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── WHY LITHIUM ────────────────────────────────── -->
   <div id="why" class="max-w-7xl mx-auto px-6 pt-20 pb-16">
-    <div class="max-w-xl">
+    <div class="max-w-xl reveal">
       <div class="text-[#00e5ff] text-xs tracking-[3px] font-medium mb-3">THE CLEAR CHOICE</div>
-      <h2 class="text-6xl font-semibold tracking-[-2.5px] leading-none section-header">Why Lithium-ion<br>beats traditional<br>batteries.</h2>
+      <h2 class="text-6xl font-semibold tracking-[-2.5px] leading-none font-display">Why Lithium-ion<br>beats traditional<br>batteries.</h2>
       <p class="mt-4 text-lg text-white/70">Real numbers. Real savings. Zero compromises.</p>
     </div>
 
     <!-- Interactive Comparison -->
-    <div class="mt-10 rounded-3xl glass p-8 md:p-10 border border-white/10">
+    <div class="mt-10 rounded-3xl glass p-8 md:p-10 border border-white/10 reveal" style="transition-delay:0.15s">
       <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-y-4 mb-8">
         <div class="text-xl font-medium">See the difference in real time</div>
-        
         <div class="flex items-center gap-x-1 p-1 rounded-2xl bg-white/5 border border-white/10">
           <button onclick="setComparison(false)" id="btn-traditional"
                   class="px-6 py-2 rounded-2xl text-sm transition-all font-medium bg-white text-[#05070f]">Traditional (Lead-Acid)</button>
@@ -360,11 +707,7 @@
                   class="px-6 py-2 rounded-2xl text-sm transition-all font-medium bg-[#00e5ff] text-black">EnergyPoint Lithium (LFP)</button>
         </div>
       </div>
-
-      <div class="space-y-5" id="comparison-metrics">
-        <!-- Populated by JS -->
-      </div>
-
+      <div class="space-y-5" id="comparison-metrics"></div>
       <div class="pt-7 mt-7 border-t border-white/10 flex flex-col sm:flex-row gap-3 text-sm">
         <div class="flex-1 px-4 py-3 bg-white/5 rounded-2xl">
           <span class="text-white/50">Over 10 years you will typically need</span><br>
@@ -378,16 +721,15 @@
     </div>
   </div>
 
-  <!-- POWERED FOR EVERY SCALE -->
+  <!-- ─── POWERED FOR EVERY SCALE ────────────────────── -->
   <div class="max-w-7xl mx-auto px-6 py-12">
-    <div class="text-center mb-10">
+    <div class="text-center mb-10 reveal">
       <div class="text-[#00e5ff] text-xs tracking-[3px]">SCALABLE TECHNOLOGY</div>
-      <h3 class="text-5xl font-semibold tracking-[-2px] mt-1">Powers homes, businesses &amp; industries.</h3>
+      <h3 class="text-5xl font-semibold tracking-[-2px] mt-1 font-display">Powers homes, businesses &amp; industries.</h3>
     </div>
 
     <div class="grid md:grid-cols-3 gap-5">
-      <!-- Residential -->
-      <div onclick="selectUseCase(0)" class="futuristic-card group glass border border-white/10 rounded-3xl p-7 cursor-pointer">
+      <div onclick="selectUseCase(0)" class="futuristic-card group glass border border-white/10 rounded-3xl p-7 cursor-pointer reveal reveal-delay-1">
         <div class="flex justify-between items-start">
           <div>
             <div class="text-xs uppercase tracking-widest text-[#00e5ff]">RESIDENTIAL</div>
@@ -396,16 +738,15 @@
           <div class="text-5xl opacity-40 group-hover:opacity-100 transition">🏠</div>
         </div>
         <div class="mt-8 text-sm leading-relaxed text-white/70">
-          Silent, compact, beautiful enough to keep in your living space. 
+          Silent, compact, beautiful enough to keep in your living space.
           10+ years of backup for inverters and solar without ever touching them.
         </div>
         <div class="mt-8 flex items-center text-xs text-[#00e5ff] group-hover:gap-x-2 gap-x-1.5 transition-all">
-          EXPLORE IN EXPERIENCE CENTER <span>→</span>
+          EXPLORE IN EXPERIENCE CENTER <span class="group-hover:translate-x-1 transition-transform">→</span>
         </div>
       </div>
 
-      <!-- Commercial -->
-      <div onclick="selectUseCase(1)" class="futuristic-card group glass border border-white/10 rounded-3xl p-7 cursor-pointer">
+      <div onclick="selectUseCase(1)" class="futuristic-card group glass border border-white/10 rounded-3xl p-7 cursor-pointer reveal reveal-delay-2">
         <div class="flex justify-between items-start">
           <div>
             <div class="text-xs uppercase tracking-widest text-[#00e5ff]">COMMERCIAL</div>
@@ -418,12 +759,11 @@
           Perfect for critical loads and rooftop solar integration.
         </div>
         <div class="mt-8 flex items-center text-xs text-[#00e5ff] group-hover:gap-x-2 gap-x-1.5 transition-all">
-          EXPLORE IN EXPERIENCE CENTER <span>→</span>
+          EXPLORE IN EXPERIENCE CENTER <span class="group-hover:translate-x-1 transition-transform">→</span>
         </div>
       </div>
 
-      <!-- Industrial -->
-      <div onclick="selectUseCase(2)" class="futuristic-card group glass border border-white/10 rounded-3xl p-7 cursor-pointer">
+      <div onclick="selectUseCase(2)" class="futuristic-card group glass border border-white/10 rounded-3xl p-7 cursor-pointer reveal reveal-delay-3">
         <div class="flex justify-between items-start">
           <div>
             <div class="text-xs uppercase tracking-widest text-[#00e5ff]">INDUSTRIAL</div>
@@ -435,42 +775,33 @@
           Extreme durability. Handles deep daily cycling. Massive energy density in a fraction of the space of lead-acid banks.
         </div>
         <div class="mt-8 flex items-center text-xs text-[#00e5ff] group-hover:gap-x-2 gap-x-1.5 transition-all">
-          EXPLORE IN EXPERIENCE CENTER <span>→</span>
+          EXPLORE IN EXPERIENCE CENTER <span class="group-hover:translate-x-1 transition-transform">→</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MULTI-LAYER EXPERIENCE CENTER -->
+  <!-- ─── EXPERIENCE CENTER ──────────────────────────── -->
   <div id="experience" class="max-w-7xl mx-auto px-6 pt-12 pb-20">
-    <div class="glass rounded-[3rem] border border-white/10 overflow-hidden">
+    <div class="glass rounded-[3rem] border border-white/10 overflow-hidden reveal">
       <div class="px-8 md:px-12 pt-10 pb-8">
         <div class="max-w-md">
           <div class="uppercase text-xs tracking-[3.5px] text-[#39ff14]">THE EXPERIENCE CENTER</div>
-          <h2 class="text-6xl font-semibold tracking-[-2.4px] leading-[0.95] mt-3">See it. Feel it.<br>Understand it.</h2>
+          <h2 class="text-6xl font-semibold tracking-[-2.4px] leading-[0.95] mt-3 font-display">See it. Feel it.<br>Understand it.</h2>
           <p class="mt-4 text-lg text-white/70">A multi-layer exploration of the most advanced lithium batteries in Kerala. Touch the future of energy.</p>
         </div>
       </div>
 
       <div class="border-t border-white/10 px-8 md:px-12 pt-8 pb-12 bg-[#05070f]">
         <div class="grid lg:grid-cols-12 gap-8">
-          
           <!-- Battery Visualizer -->
           <div class="lg:col-span-7">
             <div class="text-xs uppercase tracking-[2px] mb-3 text-white/50 pl-1">AESTHETIC • COMPACT • POWERFUL</div>
-            
-            <!-- The Interactive Battery -->
-            <div id="xp-battery-container" 
+            <div id="xp-battery-container"
                  class="relative mx-auto max-w-[380px] aspect-[4/3.1] bg-[#0a0f1e] rounded-[3rem] border border-white/10 p-5 flex items-center justify-center overflow-hidden">
-              
-              <!-- Premium Battery Body -->
-              <div id="xp-battery" 
+              <div id="xp-battery"
                    class="w-[240px] h-[310px] bg-gradient-to-b from-[#1a2338] to-[#0c1224] rounded-[2.25rem] border border-white/20 relative flex flex-col p-4 battery-shell battery-glow">
-                
-                <!-- Top terminal -->
                 <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-20 h-5 bg-[#1a2338] border border-white/20 rounded-b-3xl z-10"></div>
-                
-                <!-- Label -->
                 <div class="flex justify-between text-xs">
                   <div>
                     <div class="font-mono text-[#00e5ff] text-xs tracking-widest">EP-48-280</div>
@@ -481,8 +812,6 @@
                     <div class="text-white/40 -mt-px">WARRANTY</div>
                   </div>
                 </div>
-
-                <!-- Cell layers visual -->
                 <div class="flex-1 my-4 grid grid-cols-1 gap-2 rounded-2xl p-2" id="xp-cells">
                   <div class="layer-cell bg-[#111827] rounded-xl border border-white/10 flex-1 flex items-center px-4 relative overflow-hidden" data-layer="cells">
                     <div class="flex-1">
@@ -492,12 +821,9 @@
                     <div class="text-right">
                       <div class="text-[10px] text-[#39ff14]">6000+ CYCLES</div>
                     </div>
-                    <!-- subtle energy pulse -->
-                    <div class="absolute right-2 bottom-2 w-9 h-px bg-gradient-to-l from-[#39ff14] to-transparent layer-pulse"></div>
+                    <div class="absolute right-2 bottom-2 w-9 h-px bg-gradient-to-l from-[#39ff14] to-transparent"></div>
                   </div>
                 </div>
-
-                <!-- BMS Layer -->
                 <div class="px-1">
                   <div class="h-9 rounded-2xl border border-white/10 bg-black/50 flex items-center px-4 text-xs" data-layer="bms">
                     <div class="flex items-center justify-between w-full">
@@ -509,8 +835,6 @@
                     </div>
                   </div>
                 </div>
-
-                <!-- Bottom status -->
                 <div class="mt-3 flex items-center justify-between text-[10px] px-1">
                   <div>
                     <span class="text-white/50">STATUS</span>
@@ -524,85 +848,240 @@
 
           <!-- Layers + Controls -->
           <div class="lg:col-span-5 space-y-6">
-            <!-- Layers -->
             <div>
               <div class="uppercase text-xs tracking-[2px] text-white/50 mb-3 pl-1">EXPLORE LAYERS</div>
-              
-              <div class="space-y-2" id="layer-controls">
-                <!-- JS injected -->
-              </div>
+              <div class="space-y-2" id="layer-controls"></div>
             </div>
-
-            <!-- Environment Switcher -->
             <div>
               <div class="uppercase text-xs tracking-[2px] text-white/50 mb-3 pl-1">CHANGE ENVIRONMENT</div>
               <div class="flex gap-2 flex-wrap" id="env-buttons">
-                <button onclick="setEnvironment(0)" class="env-btn px-5 py-2 rounded-2xl text-sm border border-white/20 bg-white/5 data-active:bg-white data-active:text-[#05070f] transition-all" data-env="0">Residential</button>
-                <button onclick="setEnvironment(1)" class="env-btn px-5 py-2 rounded-2xl text-sm border border-white/20 bg-white/5 data-active:bg-white data-active:text-[#05070f] transition-all" data-env="1">Commercial</button>
-                <button onclick="setEnvironment(2)" class="env-btn px-5 py-2 rounded-2xl text-sm border border-white/20 bg-white/5 data-active:bg-white data-active:text-[#05070f] transition-all" data-env="2">Industrial</button>
+                <button onclick="setEnvironment(0)" class="env-btn px-5 py-2 rounded-2xl text-sm border border-white/20 bg-white/5 transition-all" data-env="0">Residential</button>
+                <button onclick="setEnvironment(1)" class="env-btn px-5 py-2 rounded-2xl text-sm border border-white/20 bg-white/5 transition-all" data-env="1">Commercial</button>
+                <button onclick="setEnvironment(2)" class="env-btn px-5 py-2 rounded-2xl text-sm border border-white/20 bg-white/5 transition-all" data-env="2">Industrial</button>
               </div>
             </div>
-
-            <!-- Current Layer Info -->
-            <div id="layer-info" 
-                 class="glass border border-white/10 rounded-2xl p-5 text-sm leading-relaxed min-h-[110px]">
-              <!-- Populated dynamically -->
-            </div>
+            <div id="layer-info"
+                 class="glass border border-white/10 rounded-2xl p-5 text-sm leading-relaxed min-h-[110px]"></div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- BENEFITS -->
-  <div id="benefits" class="max-w-7xl mx-auto px-6 pb-20">
-    <div class="text-center mb-10">
+  <!-- ─── TECH STRIP ─────────────────────────────────── -->
+  <div class="py-10 border-y border-white/5 bg-[#070a14] overflow-hidden">
+    <div class="text-center mb-8 reveal">
+      <div class="text-[#00e5ff] text-xs tracking-[3px]">TECHNOLOGY INSIDE</div>
+    </div>
+    <div class="marquee-track">
+      <div class="marquee-content">
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#00e5ff]"></div>BMS Protected</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#39ff14]"></div>LFP Chemistry</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#00e5ff]"></div>App Connected</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#39ff14]"></div>6000+ Cycles</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#00e5ff]"></div>Solar Ready</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#39ff14]"></div>Zero Maintenance</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#00e5ff]"></div>100% DoD</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#39ff14]"></div>Kerala Climate Rated</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#00e5ff]"></div>Inverter Compatible</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#39ff14]"></div>Scalable from 5–100 kWh</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#00e5ff]"></div>Temperature Managed</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#39ff14]"></div>5-Year Warranty</div>
+      </div>
+      <div class="marquee-content" aria-hidden="true">
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#00e5ff]"></div>BMS Protected</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#39ff14]"></div>LFP Chemistry</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#00e5ff]"></div>App Connected</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#39ff14]"></div>6000+ Cycles</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#00e5ff]"></div>Solar Ready</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#39ff14]"></div>Zero Maintenance</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#00e5ff]"></div>100% DoD</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#39ff14]"></div>Kerala Climate Rated</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#00e5ff]"></div>Inverter Compatible</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#39ff14]"></div>Scalable from 5–100 kWh</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#00e5ff]"></div>Temperature Managed</div>
+        <div class="tech-pill"><div class="tech-pill-dot bg-[#39ff14]"></div>5-Year Warranty</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── BENEFITS ───────────────────────────────────── -->
+  <div id="benefits" class="max-w-7xl mx-auto px-6 py-20">
+    <div class="text-center mb-10 reveal">
       <div class="text-[#00e5ff] text-xs tracking-[3px]">BUILT FOR KERALA CONDITIONS</div>
-      <h3 class="text-5xl font-semibold tracking-tight mt-1">Zero maintenance.<br>No replacements. 5-year warranty.</h3>
+      <h3 class="text-5xl font-semibold tracking-tight mt-1 font-display">Zero maintenance.<br>No replacements. 5-year warranty.</h3>
     </div>
 
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div class="glass border border-white/10 rounded-3xl p-7">
-        <div class="text-4xl mb-6">0</div>
+      <div class="benefit-card glass border border-white/10 rounded-3xl p-7 reveal reveal-delay-1">
+        <div class="text-4xl mb-6 font-display font-bold premium-gradient">0</div>
         <div class="font-semibold text-xl">Maintenance Required</div>
         <div class="text-sm text-white/60 mt-2">No watering. No cleaning. No equalizing. Install and forget.</div>
       </div>
-      <div class="glass border border-white/10 rounded-3xl p-7">
-        <div class="text-4xl mb-6 font-mono tabular-nums">6000+</div>
+      <div class="benefit-card glass border border-white/10 rounded-3xl p-7 reveal reveal-delay-2">
+        <div class="text-4xl mb-6 font-mono tabular-nums font-bold premium-gradient">6000+</div>
         <div class="font-semibold text-xl">Deep Discharge Cycles</div>
         <div class="text-sm text-white/60 mt-2">Equivalent to 15+ years of daily use. Traditional batteries die in 2–4 years.</div>
       </div>
-      <div class="glass border border-white/10 rounded-3xl p-7">
-        <div class="text-4xl mb-6">5</div>
+      <div class="benefit-card glass border border-white/10 rounded-3xl p-7 reveal reveal-delay-3">
+        <div class="text-4xl mb-6 font-display font-bold premium-gradient">5</div>
         <div class="font-semibold text-xl">Years Full Warranty</div>
         <div class="text-sm text-white/60 mt-2">Comprehensive coverage. No hidden clauses. Real peace of mind.</div>
       </div>
-      <div class="glass border border-white/10 rounded-3xl p-7">
-        <div class="text-4xl mb-6 font-mono tabular-nums">97%</div>
+      <div class="benefit-card glass border border-white/10 rounded-3xl p-7 reveal reveal-delay-4">
+        <div class="text-4xl mb-6 font-mono tabular-nums font-bold premium-gradient">97%</div>
         <div class="font-semibold text-xl">Round-Trip Efficiency</div>
         <div class="text-sm text-white/60 mt-2">You get almost every watt you put in. Lead-acid loses 20–30%.</div>
       </div>
-      <div class="glass border border-white/10 rounded-3xl p-7">
-        <div class="text-4xl mb-6">1</div>
+      <div class="benefit-card glass border border-white/10 rounded-3xl p-7 reveal reveal-delay-5">
+        <div class="text-4xl mb-6 font-display font-bold premium-gradient">1</div>
         <div class="font-semibold text-xl">Battery for 10+ Years</div>
         <div class="text-sm text-white/60 mt-2">No need to budget for replacements every 3 years.</div>
       </div>
-      <div class="glass border border-white/10 rounded-3xl p-7">
-        <div class="text-4xl mb-6">50%</div>
+      <div class="benefit-card glass border border-white/10 rounded-3xl p-7 reveal reveal-delay-6">
+        <div class="text-4xl mb-6 font-display font-bold premium-gradient">50%</div>
         <div class="font-semibold text-xl">Lower Lifetime Cost</div>
         <div class="text-sm text-white/60 mt-2">Despite higher upfront cost, total ownership cost is dramatically lower.</div>
       </div>
     </div>
   </div>
 
-  <!-- VISIT / LOCATION -->
+  <!-- ─── TESTIMONIALS ───────────────────────────────── -->
+  <div class="py-16 bg-[#070a14] overflow-hidden border-y border-white/5">
+    <div class="max-w-7xl mx-auto px-6 mb-10 reveal">
+      <div class="text-[#00e5ff] text-xs tracking-[3px]">WHAT CUSTOMERS SAY</div>
+      <h3 class="text-4xl font-semibold tracking-tight mt-2 font-display">Trusted across Kerala.</h3>
+    </div>
+    <div class="marquee-track" style="gap: 1.25rem">
+      <div class="marquee-content" style="animation-duration: 40s; gap: 1.25rem">
+        <div class="testimonial-card">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00e5ff] to-[#39ff14] flex items-center justify-center text-[#05070f] font-bold text-sm">AJ</div>
+            <div>
+              <div class="font-semibold text-sm">Arun Joseph</div>
+              <div class="text-xs text-white/50">Thiruvananthapuram • Residential</div>
+            </div>
+          </div>
+          <div class="text-yellow-400 text-xs mb-3">★★★★★</div>
+          <p class="text-sm text-white/75 leading-relaxed">"Switched from lead-acid 2 years ago. Haven't touched it once. My inverter just works. The EnergyPoint team was incredibly knowledgeable."</p>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#39ff14] to-[#00e5ff] flex items-center justify-center text-[#05070f] font-bold text-sm">RM</div>
+            <div>
+              <div class="font-semibold text-sm">Ritu Menon</div>
+              <div class="text-xs text-white/50">Kochi • Commercial</div>
+            </div>
+          </div>
+          <div class="text-yellow-400 text-xs mb-3">★★★★★</div>
+          <p class="text-sm text-white/75 leading-relaxed">"Our clinic's power backup is critical. EnergyPoint's LFP system has been flawless for 18 months. Highly recommended for any medical facility."</p>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00e5ff] to-purple-500 flex items-center justify-center text-white font-bold text-sm">PK</div>
+            <div>
+              <div class="font-semibold text-sm">Pradeep Kumar</div>
+              <div class="text-xs text-white/50">Kozhikode • Solar + Storage</div>
+            </div>
+          </div>
+          <div class="text-yellow-400 text-xs mb-3">★★★★★</div>
+          <p class="text-sm text-white/75 leading-relaxed">"The experience center visit sold me immediately. Seeing the technology up close was incredible. Installed a 14 kWh system last month — love it."</p>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-[#39ff14] flex items-center justify-center text-[#05070f] font-bold text-sm">SN</div>
+            <div>
+              <div class="font-semibold text-sm">Sreeja Nair</div>
+              <div class="text-xs text-white/50">Thrissur • Villa</div>
+            </div>
+          </div>
+          <div class="text-yellow-400 text-xs mb-3">★★★★★</div>
+          <p class="text-sm text-white/75 leading-relaxed">"It's beautiful. Mounted in my utility room and it honestly looks like a piece of tech art. And the performance is exactly as promised."</p>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00e5ff] to-[#39ff14] flex items-center justify-center text-[#05070f] font-bold text-sm">TV</div>
+            <div>
+              <div class="font-semibold text-sm">Thomas Varghese</div>
+              <div class="text-xs text-white/50">Kottayam • Industrial</div>
+            </div>
+          </div>
+          <div class="text-yellow-400 text-xs mb-3">★★★★★</div>
+          <p class="text-sm text-white/75 leading-relaxed">"We run a cold storage unit. The reliability is what matters. EnergyPoint's industrial setup has handled our daily load perfectly. Zero downtime."</p>
+        </div>
+      </div>
+      <div class="marquee-content" style="animation-duration: 40s; animation-delay: -20s; gap: 1.25rem" aria-hidden="true">
+        <div class="testimonial-card">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00e5ff] to-[#39ff14] flex items-center justify-center text-[#05070f] font-bold text-sm">AJ</div>
+            <div>
+              <div class="font-semibold text-sm">Arun Joseph</div>
+              <div class="text-xs text-white/50">Thiruvananthapuram • Residential</div>
+            </div>
+          </div>
+          <div class="text-yellow-400 text-xs mb-3">★★★★★</div>
+          <p class="text-sm text-white/75 leading-relaxed">"Switched from lead-acid 2 years ago. Haven't touched it once. My inverter just works. The EnergyPoint team was incredibly knowledgeable."</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#39ff14] to-[#00e5ff] flex items-center justify-center text-[#05070f] font-bold text-sm">RM</div>
+            <div>
+              <div class="font-semibold text-sm">Ritu Menon</div>
+              <div class="text-xs text-white/50">Kochi • Commercial</div>
+            </div>
+          </div>
+          <div class="text-yellow-400 text-xs mb-3">★★★★★</div>
+          <p class="text-sm text-white/75 leading-relaxed">"Our clinic's power backup is critical. EnergyPoint's LFP system has been flawless for 18 months. Highly recommended for any medical facility."</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00e5ff] to-purple-500 flex items-center justify-center text-white font-bold text-sm">PK</div>
+            <div>
+              <div class="font-semibold text-sm">Pradeep Kumar</div>
+              <div class="text-xs text-white/50">Kozhikode • Solar + Storage</div>
+            </div>
+          </div>
+          <div class="text-yellow-400 text-xs mb-3">★★★★★</div>
+          <p class="text-sm text-white/75 leading-relaxed">"The experience center visit sold me immediately. Seeing the technology up close was incredible. Installed a 14 kWh system last month — love it."</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-[#39ff14] flex items-center justify-center text-[#05070f] font-bold text-sm">SN</div>
+            <div>
+              <div class="font-semibold text-sm">Sreeja Nair</div>
+              <div class="text-xs text-white/50">Thrissur • Villa</div>
+            </div>
+          </div>
+          <div class="text-yellow-400 text-xs mb-3">★★★★★</div>
+          <p class="text-sm text-white/75 leading-relaxed">"It's beautiful. Mounted in my utility room and it honestly looks like a piece of tech art. And the performance is exactly as promised."</p>
+        </div>
+        <div class="testimonial-card">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00e5ff] to-[#39ff14] flex items-center justify-center text-[#05070f] font-bold text-sm">TV</div>
+            <div>
+              <div class="font-semibold text-sm">Thomas Varghese</div>
+              <div class="text-xs text-white/50">Kottayam • Industrial</div>
+            </div>
+          </div>
+          <div class="text-yellow-400 text-xs mb-3">★★★★★</div>
+          <p class="text-sm text-white/75 leading-relaxed">"We run a cold storage unit. The reliability is what matters. EnergyPoint's industrial setup has handled our daily load perfectly. Zero downtime."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── VISIT / LOCATION ───────────────────────────── -->
   <div id="visit" class="bg-[#0a0f1e] border-t border-white/10">
     <div class="max-w-7xl mx-auto px-6 py-16">
       <div class="grid lg:grid-cols-2 gap-x-12 gap-y-10 items-center">
-        <div>
+        <div class="reveal-left">
           <div class="uppercase tracking-[3px] text-xs text-[#39ff14]">EXPERIENCE IT IN PERSON</div>
-          <h2 class="text-6xl font-semibold tracking-[-2.2px] leading-none mt-3">Visit the<br>Experience Center.</h2>
-          
+          <h2 class="text-6xl font-semibold tracking-[-2.2px] leading-none mt-3 font-display">Visit the<br>Experience Center.</h2>
+
           <div class="mt-8 space-y-2 text-lg">
             <div class="flex items-start gap-4">
               <span class="block w-5 mt-1.5 text-[#00e5ff]">→</span>
@@ -618,17 +1097,16 @@
             </div>
           </div>
 
-          <a href="form.html" 
-             class="mt-9 inline-flex items-center gap-x-3 rounded-3xl bg-white text-[#05070f] font-semibold px-9 py-4 text-lg active:scale-[0.985] transition">
+          <a href="form.html"
+             class="btn-ripple mt-9 inline-flex items-center gap-x-3 rounded-3xl bg-white text-[#05070f] font-semibold px-9 py-4 text-lg active:scale-[0.985] transition hover:bg-[#00e5ff]">
             Schedule Your Private Visit
           </a>
         </div>
 
         <!-- MAP -->
-        <div class="rounded-3xl overflow-hidden border border-white/10 shadow-2xl h-[380px] relative" id="map-container">
-          <!-- Leaflet map injected by JS -->
+        <div class="rounded-3xl overflow-hidden border border-white/10 shadow-2xl h-[380px] relative reveal-right" id="map-container">
           <div class="absolute inset-0 bg-[#05070f] flex items-center justify-center text-white/40 text-sm" id="map-fallback">
-            Loading map...
+            Loading map…
           </div>
         </div>
       </div>
@@ -641,72 +1119,331 @@
     </div>
   </div>
 
-  <footer class="border-t border-white/10 py-9 text-center text-xs text-white/40 tracking-widest">
-    © EnergyPoint. Powering Kerala's sustainable future.<br>
-    <span class="text-white/30">Live on GitHub Pages</span>
+  <!-- ─── FOOTER ──────────────────────────────────────── -->
+  <footer class="bg-[#05070f]">
+    <div class="footer-gradient-border"></div>
+    <div class="max-w-7xl mx-auto px-6 py-12">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00e5ff] to-[#39ff14] flex items-center justify-center">
+            <span class="text-[#05070f] font-bold text-sm font-display">EP</span>
+          </div>
+          <div>
+            <div class="font-semibold tracking-tight font-display">ENERGYPOINT</div>
+            <div class="text-[10px] text-white/40">Powering Kerala's sustainable future</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-6 text-xs text-white/40">
+          <a href="#why" class="hover:text-white/70 transition-colors">Why Lithium</a>
+          <a href="#experience" class="hover:text-white/70 transition-colors">Experience</a>
+          <a href="#benefits" class="hover:text-white/70 transition-colors">Benefits</a>
+          <a href="form.html" class="hover:text-white/70 transition-colors">Contact</a>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <a href="https://github.com/robindev2026-a11y/EnergyPoint" target="_blank"
+             class="w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center hover:border-white/30 transition-colors" aria-label="GitHub">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-white/50">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="mt-8 pt-6 border-t border-white/5 text-center text-xs text-white/25 tracking-widest">
+        © 2025 EnergyPoint. All rights reserved. • Built with ❤️ in Kerala
+      </div>
+    </div>
   </footer>
 
+  <!-- ─── LEAFLET ─────────────────────────────────────── -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <script>
-    // Tailwind script configuration
-    function initTailwind() {
-      document.documentElement.style.setProperty('--accent-cyan', '#00e5ff');
+    // ─── LOADER ──────────────────────────────────────────
+    (function initLoader() {
+      const loader = document.getElementById('loader');
+      const bar    = document.getElementById('loader-bar');
+      const label  = document.getElementById('loader-label');
+      const labels = ['INITIALIZING…', 'LOADING CELLS…', 'CALIBRATING BMS…', 'CHARGING…', 'READY'];
+      let progress = 0;
+      let labelIdx = 0;
+
+      const tick = setInterval(() => {
+        progress += Math.random() * 22 + 8;
+        if (progress >= 100) progress = 100;
+        bar.style.width = progress + '%';
+
+        const lIdx = Math.min(Math.floor(progress / 25), labels.length - 1);
+        if (lIdx !== labelIdx) { labelIdx = lIdx; label.textContent = labels[labelIdx]; }
+
+        if (progress >= 100) {
+          clearInterval(tick);
+          label.textContent = 'READY';
+          setTimeout(() => {
+            loader.classList.add('hidden');
+            // Trigger hero entrance
+            document.getElementById('hero-battery-wrapper').classList.add('entered');
+            startTypewriter();
+            // Reveal hero elements
+            document.querySelectorAll('.reveal').forEach(el => el.classList.add('revealed'));
+          }, 300);
+        }
+      }, 80);
+    })();
+
+    // ─── TYPEWRITER ───────────────────────────────────────
+    function startTypewriter() {
+      const text    = 'THE FUTURE\nOF ENERGY\nSTORAGE.';
+      const el      = document.getElementById('hero-text');
+      const cursor  = document.getElementById('hero-cursor');
+      let idx = 0;
+
+      const type = () => {
+        if (idx < text.length) {
+          const ch = text[idx];
+          if (ch === '\n') {
+            el.innerHTML += '<br>';
+          } else {
+            el.innerHTML += ch;
+          }
+          idx++;
+          setTimeout(type, idx < 10 ? 55 : 38);
+        } else {
+          // Done — fade cursor out after a pause
+          setTimeout(() => { cursor.style.opacity = '0'; }, 2200);
+        }
+      };
+      type();
     }
 
-    // Scroll progress bar
+    // ─── CURSOR GLOW ──────────────────────────────────────
+    (function initCursor() {
+      const glow  = document.getElementById('cursor-glow');
+      const trail = document.getElementById('cursor-trail');
+      let mx = -100, my = -100;
+      let tx = -100, ty = -100;
+
+      window.addEventListener('mousemove', e => {
+        mx = e.clientX; my = e.clientY;
+        glow.style.left  = mx + 'px';
+        glow.style.top   = my + 'px';
+      });
+
+      const animTrail = () => {
+        tx += (mx - tx) * 0.15;
+        ty += (my - ty) * 0.15;
+        trail.style.left = tx + 'px';
+        trail.style.top  = ty + 'px';
+        requestAnimationFrame(animTrail);
+      };
+      animTrail();
+
+      // Scale up on interactive elements
+      document.querySelectorAll('a, button, [onclick]').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+          glow.style.width  = '40px';
+          glow.style.height = '40px';
+          glow.style.background = 'radial-gradient(circle, rgba(57,255,20,0.6) 0%, rgba(57,255,20,0) 70%)';
+        });
+        el.addEventListener('mouseleave', () => {
+          glow.style.width  = '20px';
+          glow.style.height = '20px';
+          glow.style.background = 'radial-gradient(circle, rgba(0,229,255,0.8) 0%, rgba(0,229,255,0) 70%)';
+        });
+      });
+    })();
+
+    // ─── HERO CANVAS PARTICLES ────────────────────────────
+    (function initParticles() {
+      const canvas = document.getElementById('hero-canvas');
+      const ctx    = canvas.getContext('2d');
+      let   W, H, dots;
+
+      function resize() {
+        W = canvas.width  = canvas.offsetWidth;
+        H = canvas.height = canvas.offsetHeight;
+        buildDots();
+      }
+
+      function buildDots() {
+        dots = [];
+        const cols = Math.ceil(W / 44);
+        const rows = Math.ceil(H / 44);
+        for (let r = 0; r <= rows; r++) {
+          for (let c = 0; c <= cols; c++) {
+            dots.push({
+              x: c * 44, y: r * 44,
+              baseAlpha: Math.random() * 0.25 + 0.04,
+              alpha: 0,
+              speed: Math.random() * 0.008 + 0.003,
+              offset: Math.random() * Math.PI * 2,
+            });
+          }
+        }
+      }
+
+      let t = 0;
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        t += 0.01;
+        dots.forEach(d => {
+          d.alpha = d.baseAlpha * (0.5 + 0.5 * Math.sin(t * d.speed * 60 + d.offset));
+          ctx.beginPath();
+          ctx.arc(d.x, d.y, 1.2, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(0, 229, 255, ${d.alpha})`;
+          ctx.fill();
+        });
+        requestAnimationFrame(draw);
+      }
+
+      resize();
+      window.addEventListener('resize', resize);
+      draw();
+    })();
+
+    // ─── SCROLL PROGRESS ─────────────────────────────────
     function initScrollProgress() {
       const bar = document.getElementById('scroll-progress');
       window.addEventListener('scroll', () => {
-        const scrollTop = window.scrollY;
-        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-        const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-        bar.style.width = Math.min(progress, 100) + '%';
+        const scrollTop  = window.scrollY;
+        const docHeight  = document.documentElement.scrollHeight - window.innerHeight;
+        const progress   = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+        bar.style.width  = Math.min(progress, 100) + '%';
       });
     }
 
-    // Hero battery charge interaction
-    let heroCharge = 94;
-    function chargeHeroBattery() {
-      const bar = document.getElementById('hero-charge-bar');
-      const text = document.getElementById('hero-charge-text');
-      
-      heroCharge = Math.min(100, heroCharge + 6);
-      
-      bar.style.width = heroCharge + '%';
-      text.textContent = Math.round(heroCharge) + '%';
-      
-      // Reset after full
-      if (heroCharge >= 100) {
-        setTimeout(() => {
-          heroCharge = 62;
-          bar.style.width = heroCharge + '%';
-          text.textContent = Math.round(heroCharge) + '%';
-        }, 1400);
-      }
-      
-      // Add a nice flash
-      bar.style.boxShadow = '0 0 18px #39ff14';
-      setTimeout(() => {
-        if (bar) bar.style.boxShadow = '';
-      }, 650);
+    // ─── NAV BLUR ON SCROLL ───────────────────────────────
+    function initNavBlur() {
+      const nav = document.getElementById('main-nav');
+      window.addEventListener('scroll', () => {
+        nav.classList.toggle('scrolled', window.scrollY > 40);
+      });
     }
 
-    // Comparison data
+    // ─── SCROLL TO TOP ────────────────────────────────────
+    function initScrollTop() {
+      const btn = document.getElementById('scroll-top-btn');
+      window.addEventListener('scroll', () => {
+        btn.classList.toggle('visible', window.scrollY > 400);
+      });
+    }
+
+    // ─── SCROLL REVEAL ────────────────────────────────────
+    function initScrollReveal() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('revealed');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+      document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => {
+        observer.observe(el);
+      });
+    }
+
+    // ─── COUNTER ANIMATION ────────────────────────────────
+    function initCounters() {
+      const counters = document.querySelectorAll('.stat-counter');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          const el      = entry.target;
+          const target  = parseInt(el.dataset.target);
+          const suffix  = el.dataset.suffix || '';
+          const start   = Date.now();
+          const duration = Math.min(1800, 400 + target * 0.18);
+
+          const update = () => {
+            const elapsed = Date.now() - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const ease = 1 - Math.pow(1 - progress, 3);
+            const current = Math.round(ease * target);
+            el.textContent = current.toLocaleString() + suffix;
+            if (progress < 1) requestAnimationFrame(update);
+          };
+          update();
+          observer.unobserve(el);
+        });
+      }, { threshold: 0.5 });
+
+      counters.forEach(c => observer.observe(c));
+    }
+
+    // ─── CARD TILT ────────────────────────────────────────
+    function initCardTilt() {
+      document.querySelectorAll('.futuristic-card').forEach(card => {
+        card.addEventListener('mousemove', e => {
+          const rect   = card.getBoundingClientRect();
+          const x      = (e.clientX - rect.left) / rect.width  - 0.5;
+          const y      = (e.clientY - rect.top)  / rect.height - 0.5;
+          card.style.transform = `perspective(600px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateY(-4px)`;
+        });
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = '';
+        });
+      });
+    }
+
+    // ─── BUTTON RIPPLE ────────────────────────────────────
+    function initRipple() {
+      document.querySelectorAll('.btn-ripple').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const rect    = btn.getBoundingClientRect();
+          const ripple  = document.createElement('span');
+          const size    = Math.max(rect.width, rect.height) * 1.5;
+          ripple.className = 'ripple-effect';
+          ripple.style.cssText = `
+            width: ${size}px; height: ${size}px;
+            left: ${e.clientX - rect.left - size/2}px;
+            top:  ${e.clientY - rect.top  - size/2}px;
+          `;
+          btn.appendChild(ripple);
+          setTimeout(() => ripple.remove(), 600);
+        });
+      });
+    }
+
+    // ─── HERO BATTERY ─────────────────────────────────────
+    let heroCharge = 94;
+    function chargeHeroBattery() {
+      const bar  = document.getElementById('hero-charge-bar');
+      const text = document.getElementById('hero-charge-text');
+      heroCharge = Math.min(100, heroCharge + 6);
+      bar.style.width     = heroCharge + '%';
+      text.textContent    = Math.round(heroCharge) + '%';
+      bar.style.boxShadow = '0 0 18px #39ff14';
+      setTimeout(() => { if (bar) bar.style.boxShadow = ''; }, 650);
+      if (heroCharge >= 100) {
+        setTimeout(() => {
+          heroCharge           = 62;
+          bar.style.width      = heroCharge + '%';
+          text.textContent     = Math.round(heroCharge) + '%';
+        }, 1400);
+      }
+    }
+
+    // ─── COMPARISON DATA ──────────────────────────────────
     const comparisonData = {
       traditional: {
-        lifespan: { label: "Lifespan", value: "3–5", unit: "years", bar: 28 },
-        cycles: { label: "Cycle Life", value: "500–800", unit: "cycles", bar: 12 },
-        efficiency: { label: "Efficiency", value: "75", unit: "%", bar: 75 },
-        maintenance: { label: "Annual Maintenance", value: "High", unit: "", bar: 85 },
-        dod: { label: "Usable Capacity", value: "50", unit: "%", bar: 50 },
-        warranty: { label: "Warranty", value: "1–2", unit: "years", bar: 25 }
+        lifespan:    { label: 'Lifespan',           value: '3–5',    unit: 'years',  bar: 28 },
+        cycles:      { label: 'Cycle Life',          value: '500–800',unit: 'cycles', bar: 12 },
+        efficiency:  { label: 'Efficiency',          value: '75',     unit: '%',      bar: 75 },
+        maintenance: { label: 'Annual Maintenance',  value: 'High',   unit: '',       bar: 85 },
+        dod:         { label: 'Usable Capacity',     value: '50',     unit: '%',      bar: 50 },
+        warranty:    { label: 'Warranty',            value: '1–2',    unit: 'years',  bar: 25 },
       },
       lithium: {
-        lifespan: { label: "Lifespan", value: "10–15", unit: "years", bar: 92 },
-        cycles: { label: "Cycle Life", value: "6000+", unit: "cycles", bar: 100 },
-        efficiency: { label: "Efficiency", value: "97", unit: "%", bar: 97 },
-        maintenance: { label: "Annual Maintenance", value: "Zero", unit: "", bar: 5 },
-        dod: { label: "Usable Capacity", value: "100", unit: "%", bar: 100 },
-        warranty: { label: "Warranty", value: "5", unit: "years", bar: 100 }
+        lifespan:    { label: 'Lifespan',           value: '10–15',  unit: 'years',  bar: 92 },
+        cycles:      { label: 'Cycle Life',          value: '6000+',  unit: 'cycles', bar: 100 },
+        efficiency:  { label: 'Efficiency',          value: '97',     unit: '%',      bar: 97 },
+        maintenance: { label: 'Annual Maintenance',  value: 'Zero',   unit: '',       bar: 5 },
+        dod:         { label: 'Usable Capacity',     value: '100',    unit: '%',      bar: 100 },
+        warranty:    { label: 'Warranty',            value: '5',      unit: 'years',  bar: 100 },
       }
     };
 
@@ -715,159 +1452,107 @@
     function renderComparison(isLithium) {
       const container = document.getElementById('comparison-metrics');
       container.innerHTML = '';
-      
       const data = isLithium ? comparisonData.lithium : comparisonData.traditional;
-      const keys = ['lifespan', 'cycles', 'efficiency', 'maintenance', 'dod', 'warranty'];
-      
+      const keys = ['lifespan','cycles','efficiency','maintenance','dod','warranty'];
       keys.forEach(key => {
-        const item = data[key];
+        const item   = data[key];
         const isGood = isLithium;
-        
-        const row = document.createElement('div');
+        const row    = document.createElement('div');
         row.className = `metric-row flex items-center gap-5 px-1 ${isGood ? 'text-white' : 'text-white/70'}`;
-        
         row.innerHTML = `
           <div class="w-44 text-sm font-medium shrink-0">${item.label}</div>
           <div class="flex-1 relative h-3 bg-white/10 rounded-full overflow-hidden">
             <div class="metric-bar h-full rounded-full ${isGood ? 'bg-gradient-to-r from-[#00e5ff] to-[#39ff14]' : 'bg-white/40'}"
-                 style="width: ${item.bar}%"></div>
+                 style="width:${item.bar}%"></div>
           </div>
           <div class="w-28 text-right tabular-nums">
             <span class="text-2xl font-semibold ${isGood ? 'text-white' : 'text-white/90'}">${item.value}</span>
             <span class="text-xs text-white/50 ml-0.5">${item.unit}</span>
           </div>
         `;
-        
         container.appendChild(row);
       });
-      
-      // Update replacement text
       const repText = document.getElementById('replacement-text');
-      const repLit = document.getElementById('replacement-lithium');
-      
+      const repLit  = document.getElementById('replacement-lithium');
       if (isLithium) {
         repText.textContent = '1 battery (10+ years)';
-        repText.className = 'text-2xl font-semibold text-[#39ff14]';
-        repLit.textContent = 'No replacements needed';
+        repText.className   = 'text-2xl font-semibold text-[#39ff14]';
+        repLit.textContent  = 'No replacements needed';
       } else {
         repText.textContent = '2–3 replacements';
-        repText.className = 'text-2xl font-semibold text-red-400';
-        repLit.textContent = 'Just 1 battery';
+        repText.className   = 'text-2xl font-semibold text-red-400';
+        repLit.textContent  = 'Just 1 battery';
       }
     }
 
     function setComparison(isLithium) {
       isLithiumMode = isLithium;
-      
-      // Update button styles
       const btnTrad = document.getElementById('btn-traditional');
-      const btnLit = document.getElementById('btn-lithium');
-      
+      const btnLit  = document.getElementById('btn-lithium');
       if (isLithium) {
-        btnLit.classList.add('bg-[#00e5ff]', 'text-black');
-        btnLit.classList.remove('bg-white/5', 'text-white');
-        btnTrad.classList.remove('bg-white', 'text-[#05070f]');
-        btnTrad.classList.add('bg-white/5', 'text-white');
+        btnLit.classList.add('bg-[#00e5ff]','text-black');
+        btnLit.classList.remove('bg-white/5','text-white');
+        btnTrad.classList.remove('bg-white','text-[#05070f]');
+        btnTrad.classList.add('bg-white/5','text-white');
       } else {
-        btnTrad.classList.add('bg-white', 'text-[#05070f]');
-        btnTrad.classList.remove('bg-white/5', 'text-white');
-        btnLit.classList.remove('bg-[#00e5ff]', 'text-black');
-        btnLit.classList.add('bg-white/5', 'text-white');
+        btnTrad.classList.add('bg-white','text-[#05070f]');
+        btnTrad.classList.remove('bg-white/5','text-white');
+        btnLit.classList.remove('bg-[#00e5ff]','text-black');
+        btnLit.classList.add('bg-white/5','text-white');
       }
-      
-      // Re-render with animation
       const container = document.getElementById('comparison-metrics');
       container.style.transition = 'opacity 0.15s';
       container.style.opacity = '0.2';
-      
       setTimeout(() => {
         renderComparison(isLithium);
         container.style.opacity = '1';
-        
-        // Bonus: animate the bars
         const bars = container.querySelectorAll('.metric-bar');
         bars.forEach((bar, i) => {
-          const w = bar.style.width;
-          bar.style.width = '0%';
-          setTimeout(() => {
-            bar.style.width = w;
-          }, 80 * i);
+          const w = bar.style.width; bar.style.width = '0%';
+          setTimeout(() => { bar.style.width = w; }, 80 * i);
         });
       }, 180);
     }
 
-    // Experience Center - Layers
+    // ─── EXPERIENCE CENTER LAYERS ─────────────────────────
     const layers = [
-      {
-        id: 'shell',
-        title: 'Aesthetic Shell',
-        desc: 'Premium matte aluminum casing with clean industrial lines. Compact footprint. Designed to look beautiful in homes and offices.',
-        highlight: 'Premium design that feels like a high-end appliance, not industrial equipment.'
-      },
-      {
-        id: 'cells',
-        title: 'LFP Prismatic Cells',
-        desc: '280Ah LiFePO₄ cells. The safest lithium chemistry. Extremely stable even in Kerala’s hot & humid climate.',
-        highlight: '6000+ cycles. 100% depth of discharge. Dramatically higher energy density than lead-acid.'
-      },
-      {
-        id: 'bms',
-        title: 'Intelligent BMS',
-        desc: 'Advanced Battery Management System with real-time monitoring, cell balancing, over-current & temperature protection.',
-        highlight: 'App connectivity. Precise SOC. Automatic safety shutoff. Remote diagnostics available.'
-      },
-      {
-        id: 'integration',
-        title: 'Seamless Integration',
-        desc: 'Works with all major inverters and solar systems. Easy wall or rack mounting. Scalable from 5kWh to 100+kWh.',
-        highlight: 'Plug-and-play with existing solar setups. Clean power. Future-proof your energy.'
-      }
+      { id:'shell',       title:'Aesthetic Shell',       desc:'Premium matte aluminum casing with clean industrial lines. Compact footprint. Designed to look beautiful in homes and offices.',                                                      highlight:'Premium design that feels like a high-end appliance, not industrial equipment.' },
+      { id:'cells',       title:'LFP Prismatic Cells',   desc:'280Ah LiFePO₄ cells. The safest lithium chemistry. Extremely stable even in Kerala\'s hot & humid climate.',                                                                           highlight:'6000+ cycles. 100% depth of discharge. Dramatically higher energy density than lead-acid.' },
+      { id:'bms',         title:'Intelligent BMS',        desc:'Advanced Battery Management System with real-time monitoring, cell balancing, over-current & temperature protection.',                                                                 highlight:'App connectivity. Precise SOC. Automatic safety shutoff. Remote diagnostics available.' },
+      { id:'integration', title:'Seamless Integration',   desc:'Works with all major inverters and solar systems. Easy wall or rack mounting. Scalable from 5kWh to 100+kWh.',                                                                         highlight:'Plug-and-play with existing solar setups. Clean power. Future-proof your energy.' },
     ];
-
     let currentLayer = 0;
 
     function initLayerControls() {
       const container = document.getElementById('layer-controls');
       container.innerHTML = '';
-      
       layers.forEach((layer, index) => {
         const el = document.createElement('button');
         el.className = `w-full text-left px-5 py-3.5 rounded-2xl border text-sm transition-all flex justify-between items-center ${index === 0 ? 'layer-active border-[#00e5ff] bg-white/5' : 'border-white/10 hover:border-white/30'}`;
         el.innerHTML = `
-          <div>
-            <div class="font-medium">${layer.title}</div>
-          </div>
-          <div class="text-xs px-2.5 py-px rounded bg-white/10 text-white/50">${(index + 1).toString().padStart(2, '0')}</div>
+          <div class="font-medium">${layer.title}</div>
+          <div class="text-xs px-2.5 py-px rounded bg-white/10 text-white/50">${(index+1).toString().padStart(2,'0')}</div>
         `;
-        
         el.onclick = () => activateLayer(index);
         container.appendChild(el);
       });
-      
-      // Initial info
       updateLayerInfo(0);
     }
 
     function activateLayer(index) {
       currentLayer = index;
-      
-      // Update buttons
       document.querySelectorAll('#layer-controls button').forEach((btn, i) => {
-        if (i === index) {
-          btn.classList.add('layer-active', 'border-[#00e5ff]', 'bg-white/5');
-        } else {
-          btn.classList.remove('layer-active', 'border-[#00e5ff]', 'bg-white/5');
-        }
+        btn.classList.toggle('layer-active',        i === index);
+        btn.classList.toggle('border-[#00e5ff]',    i === index);
+        btn.classList.toggle('bg-white/5',          i === index);
       });
-      
       updateLayerInfo(index);
       highlightBatteryLayer(index);
     }
 
     function updateLayerInfo(index) {
-      const info = document.getElementById('layer-info');
+      const info  = document.getElementById('layer-info');
       const layer = layers[index];
-      
       info.innerHTML = `
         <div class="font-semibold text-[#00e5ff] mb-1 tracking-tight">${layer.title}</div>
         <div class="text-white/90">${layer.desc}</div>
@@ -877,87 +1562,59 @@
 
     function highlightBatteryLayer(index) {
       const battery = document.getElementById('xp-battery');
-      const cells = document.getElementById('xp-cells');
-      
-      // Reset all highlights
-      battery.style.boxShadow = '0 0 25px rgba(0, 229, 255, 0.5), inset 0 0 30px rgba(0, 229, 255, 0.15)';
+      const cells   = document.getElementById('xp-cells');
+      const status  = document.getElementById('xp-status');
+      battery.style.boxShadow  = '0 0 25px rgba(0,229,255,0.5),inset 0 0 30px rgba(0,229,255,0.15)';
       battery.style.borderColor = 'rgba(255,255,255,0.2)';
-      
-      cells.style.boxShadow = '';
-      
-      const status = document.getElementById('xp-status');
-      
-      if (index === 0) { // Shell
+      cells.style.boxShadow    = '';
+      if (index === 0) {
         battery.style.borderColor = '#00e5ff';
-        battery.style.boxShadow = '0 0 35px rgba(0,229,255,0.6), inset 0 0 20px rgba(0,229,255,0.25)';
-      } else if (index === 1) { // Cells
-        cells.style.boxShadow = '0 0 25px rgba(57,255,20,0.6)';
-        status.textContent = 'EXCELLENT';
-        status.style.color = '#39ff14';
-      } else if (index === 2) { // BMS
-        status.textContent = 'MONITORING';
-        status.style.color = '#00e5ff';
-        battery.style.boxShadow = '0 0 25px rgba(0,229,255,0.6), 0 0 50px rgba(57,255,20,0.15)';
-      } else if (index === 3) { // Integration
+        battery.style.boxShadow   = '0 0 35px rgba(0,229,255,0.6),inset 0 0 20px rgba(0,229,255,0.25)';
+      } else if (index === 1) {
+        cells.style.boxShadow     = '0 0 25px rgba(57,255,20,0.6)';
+        status.textContent        = 'EXCELLENT';
+        status.style.color        = '#39ff14';
+      } else if (index === 2) {
+        status.textContent        = 'MONITORING';
+        status.style.color        = '#00e5ff';
+        battery.style.boxShadow   = '0 0 25px rgba(0,229,255,0.6),0 0 50px rgba(57,255,20,0.15)';
+      } else if (index === 3) {
         battery.style.borderColor = '#39ff14';
-        battery.style.boxShadow = '0 0 30px rgba(57,255,20,0.5), inset 0 0 25px rgba(57,255,20,0.15)';
+        battery.style.boxShadow   = '0 0 30px rgba(57,255,20,0.5),inset 0 0 25px rgba(57,255,20,0.15)';
       }
-      
-      // Auto reset status after 2.8s
       setTimeout(() => {
-        if (status) {
-          status.textContent = 'OPTIMAL';
-          status.style.color = '#39ff14';
-        }
+        if (status) { status.textContent = 'OPTIMAL'; status.style.color = '#39ff14'; }
       }, 2800);
     }
 
-    // Environment simulator
+    // ─── ENVIRONMENTS ─────────────────────────────────────
     const environments = [
-      { name: "Residential", desc: "Perfect for villas and apartments. Silent operation, wall-mountable, aesthetically designed to blend into modern interiors.", charge: "100%", status: "HOME READY" },
-      { name: "Commercial", desc: "Ideal for offices, clinics, retail and schools. Handles frequent cycling from solar + grid. Low footprint for server rooms.", charge: "87%", status: "BUSINESS MODE" },
-      { name: "Industrial", desc: "Heavy-duty 3-phase systems for factories, cold storage, farms and manufacturing. Massive daily throughput with near-zero downtime.", charge: "72%", status: "HEAVY DUTY" }
+      { name:'Residential', desc:'Perfect for villas and apartments. Silent operation, wall-mountable, aesthetically designed to blend into modern interiors.', charge:'100%', status:'HOME READY' },
+      { name:'Commercial',  desc:'Ideal for offices, clinics, retail and schools. Handles frequent cycling from solar + grid. Low footprint for server rooms.', charge:'87%',  status:'BUSINESS MODE' },
+      { name:'Industrial',  desc:'Heavy-duty 3-phase systems for factories, cold storage, farms and manufacturing. Massive daily throughput with near-zero downtime.', charge:'72%',  status:'HEAVY DUTY' },
     ];
-
     let currentEnv = 0;
 
     function setEnvironment(envIndex) {
       currentEnv = envIndex;
-      
-      // Update buttons
-      document.querySelectorAll('.env-btn').forEach((btn, i) => {
-        if (parseInt(btn.dataset.env) === envIndex) {
-          btn.classList.add('!bg-white', '!text-[#05070f]', 'border-white');
-        } else {
-          btn.classList.remove('!bg-white', '!text-[#05070f]', 'border-white');
-        }
+      document.querySelectorAll('.env-btn').forEach((btn) => {
+        const active = parseInt(btn.dataset.env) === envIndex;
+        btn.classList.toggle('!bg-white',       active);
+        btn.classList.toggle('!text-[#05070f]', active);
+        btn.classList.toggle('border-white',    active);
       });
-      
-      const battery = document.getElementById('xp-battery');
-      const status = document.getElementById('xp-status');
+      const battery  = document.getElementById('xp-battery');
+      const status   = document.getElementById('xp-status');
       const chargeEl = document.getElementById('xp-charge');
-      const info = document.getElementById('layer-info');
-      
-      const env = environments[envIndex];
-      
-      // Visual feedback on battery
-      if (envIndex === 0) {
-        battery.style.transform = 'scale(1)';
-        battery.style.borderColor = 'rgba(255,255,255,0.2)';
-      } else if (envIndex === 1) {
-        battery.style.transform = 'scale(0.96)';
-        battery.style.borderColor = '#00e5ff';
-      } else {
-        battery.style.transform = 'scale(0.92)';
-        battery.style.borderColor = '#39ff14';
-      }
-      
-      // Update status & charge
-      chargeEl.textContent = env.charge;
-      status.textContent = env.status;
-      status.style.color = envIndex === 2 ? '#39ff14' : '#00e5ff';
-      
-      // Update the info panel with environment context
+      const info     = document.getElementById('layer-info');
+      const env      = environments[envIndex];
+      const scales   = ['scale(1)', 'scale(0.96)', 'scale(0.92)'];
+      const borders  = ['rgba(255,255,255,0.2)', '#00e5ff', '#39ff14'];
+      battery.style.transform   = scales[envIndex];
+      battery.style.borderColor = borders[envIndex];
+      chargeEl.textContent      = env.charge;
+      status.textContent        = env.status;
+      status.style.color        = envIndex === 2 ? '#39ff14' : '#00e5ff';
       if (info) {
         info.innerHTML = `
           <div class="text-[#39ff14] font-semibold text-xs tracking-wider mb-1">${env.name.toUpperCase()}</div>
@@ -967,272 +1624,162 @@
       }
     }
 
-    function initEnvironments() {
-      // Activate first env by default
-      setTimeout(() => {
-        const firstBtn = document.querySelector('.env-btn[data-env="0"]');
-        if (firstBtn) firstBtn.classList.add('!bg-white', '!text-[#05070f]', 'border-white');
-      }, 40);
-    }
-
-    // Use case quick jump from cards
     function selectUseCase(type) {
-      // Scroll to experience
-      document.getElementById('experience').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      
-      // Set environment
+      document.getElementById('experience').scrollIntoView({ behavior:'smooth', block:'start' });
       setTimeout(() => {
         setEnvironment(type);
-        
-        // Also activate a relevant layer
-        const layerIndex = type === 0 ? 0 : (type === 1 ? 2 : 3);
-        activateLayer(layerIndex);
+        activateLayer(type === 0 ? 0 : type === 1 ? 2 : 3);
       }, 850);
     }
 
-    // Initialize the full comparison
+    // ─── COMPARISON INIT ──────────────────────────────────
     function initComparison() {
       renderComparison(true);
-      
-      // Set lithium as active
-      const btnLit = document.getElementById('btn-lithium');
-      btnLit.classList.add('bg-[#00e5ff]', 'text-black');
-      
-      // Auto animate the bars once on load
+      document.getElementById('btn-lithium').classList.add('bg-[#00e5ff]','text-black');
       setTimeout(() => {
         const bars = document.querySelectorAll('#comparison-metrics .metric-bar');
         bars.forEach((bar, i) => {
-          const finalWidth = bar.style.width;
+          const w = bar.style.width;
           bar.style.width = '0';
           setTimeout(() => {
             bar.style.transition = 'width 1.1s cubic-bezier(0.23, 1, 0.32, 1)';
-            bar.style.width = finalWidth;
+            bar.style.width = w;
           }, 180 + i * 70);
         });
       }, 800);
     }
 
-    // Leaflet Map
+    // ─── MAP ──────────────────────────────────────────────
     function initMap() {
       const container = document.getElementById('map-container');
-      const fallback = document.getElementById('map-fallback');
-      
-      // Approximate coords for Kochi (change this!)
-      const lat = 9.9312;
-      const lng = 76.2673;
-      
-      // Clear fallback
+      const fallback  = document.getElementById('map-fallback');
+      const lat = 9.9312, lng = 76.2673;
       fallback.style.display = 'none';
-      
-      // Create map
-      const map = L.map(container, {
-        zoomControl: false,
-        attributionControl: false
-      }).setView([lat, lng], 14);
-      
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        className: 'map-tiles'
-      }).addTo(map);
-      
-      const marker = L.marker([lat, lng]).addTo(map);
-      
+      const map = L.map(container, { zoomControl:false, attributionControl:false }).setView([lat,lng], 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+      const marker = L.marker([lat,lng]).addTo(map);
       marker.bindPopup(`
-        <div style="color:#111827; font-size:13px; line-height:1.3">
+        <div style="color:#111827;font-size:13px;line-height:1.4">
           <strong>EnergyPoint Experience Center</strong><br>
           Kochi, Kerala<br>
           <span style="color:#666">Open by appointment</span>
         </div>
-      `, { closeButton: false }).openPopup();
-      
-      // Store for later address update
+      `, { closeButton:false }).openPopup();
       window.energypointMap = map;
     }
 
-    function updateAddress(address, phone, email) {
-      const el = document.getElementById('address-line');
-      if (address) el.textContent = address;
-      
-      // Also update footer-ish area if needed
-      if (phone || email) {
-        // Could extend later
-      }
-    }
-
+    // ─── BATTERY DRAG ─────────────────────────────────────
     function initBatteryInteractions() {
-      // Bonus: allow dragging charge level on the XP battery
       const container = document.getElementById('xp-battery-container');
-      const chargeEl = document.getElementById('xp-charge');
-      const battery = document.getElementById('xp-battery');
-      
-      let isDragging = false;
-      
-      const updateChargeFromEvent = (e) => {
-        const rect = container.getBoundingClientRect();
-        const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+      const chargeEl  = document.getElementById('xp-charge');
+      const battery   = document.getElementById('xp-battery');
+      let isDragging  = false;
+      const update = (e) => {
+        const rect    = container.getBoundingClientRect();
+        const y       = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
         const percent = Math.max(18, Math.min(100, Math.round(100 - (y / rect.height) * 100)));
-        
         chargeEl.textContent = percent + '%';
-        battery.style.boxShadow = `0 0 ${28 + (percent-50)/3}px rgba(0, 229, 255, ${0.35 + percent/280})`;
+        battery.style.boxShadow = `0 0 ${28 + (percent-50)/3}px rgba(0,229,255,${0.35 + percent/280})`;
       };
-      
-      container.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        updateChargeFromEvent(e);
-      });
-      
-      window.addEventListener('mouseup', () => isDragging = false);
-      container.addEventListener('mousemove', (e) => {
-        if (isDragging) updateChargeFromEvent(e);
-      });
-      
-      // Touch support
-      container.addEventListener('touchstart', (e) => {
-        isDragging = true;
-        updateChargeFromEvent(e);
-      });
-      container.addEventListener('touchend', () => isDragging = false);
-      container.addEventListener('touchmove', (e) => {
-        if (isDragging) updateChargeFromEvent(e);
-      });
+      container.addEventListener('mousedown',  e => { isDragging = true;  update(e); });
+      window.addEventListener('mouseup',       () => isDragging = false);
+      container.addEventListener('mousemove',  e => { if (isDragging) update(e); });
+      container.addEventListener('touchstart', e => { isDragging = true;  update(e); });
+      container.addEventListener('touchend',   () => isDragging = false);
+      container.addEventListener('touchmove',  e => { if (isDragging) update(e); });
     }
 
-    // Mobile menu
+    // ─── MOBILE MENU ──────────────────────────────────────
     function toggleMobileMenu() {
-      const nav = document.querySelector('nav');
+      const nav      = document.querySelector('nav');
       const existing = document.getElementById('mobile-menu');
-      
-      if (existing) {
-        existing.remove();
-        return;
-      }
-      
+      if (existing) { existing.remove(); return; }
       const menu = document.createElement('div');
-      menu.id = 'mobile-menu';
-      menu.className = 'md:hidden absolute top-20 left-0 right-0 glass border-b border-white/10 px-6 py-8 flex flex-col gap-y-5 text-lg';
+      menu.id        = 'mobile-menu';
+      menu.className = 'md:hidden absolute top-20 left-0 right-0 bg-[#05070f]/95 backdrop-blur-xl border-b border-white/10 px-6 py-8 flex flex-col gap-y-5 text-lg z-50';
       menu.innerHTML = `
-        <a href="#why" class="py-1">Why Lithium</a>
+        <a href="#why"        class="py-1">Why Lithium</a>
         <a href="#experience" class="py-1">Experience Center</a>
-        <a href="#benefits" class="py-1">Benefits</a>
-        <a href="#visit" class="py-1">Visit Us</a>
+        <a href="#benefits"   class="py-1">Benefits</a>
+        <a href="#visit"      class="py-1">Visit Us</a>
         <div class="h-px bg-white/10 my-2"></div>
         <a href="form.html" class="py-1 text-[#00e5ff]">Enquire Now →</a>
       `;
-      
       nav.appendChild(menu);
-      
       menu.querySelectorAll('a').forEach(a => {
-        a.addEventListener('click', () => {
-          setTimeout(() => menu.remove(), 120);
-        });
+        a.addEventListener('click', () => setTimeout(() => menu.remove(), 120));
       });
     }
 
-    // Keyboard support for hero battery
-    function initKeyboard() {
-      document.addEventListener('keydown', (e) => {
-        if (e.key.toLowerCase() === 'c' && document.activeElement.tagName === 'BODY') {
-          chargeHeroBattery();
-        }
-      });
-    }
+    // ─── KEYBOARD ─────────────────────────────────────────
+    document.addEventListener('keydown', e => {
+      if (e.key.toLowerCase() === 'c' && document.activeElement.tagName === 'BODY') {
+        chargeHeroBattery();
+      }
+    });
 
-    // GSAP Scroll animations
-    function initScrollAnimations() {
+    // ─── GSAP SCROLL ANIMATIONS ───────────────────────────
+    function initGSAP() {
       if (typeof gsap === 'undefined') return;
-      
       gsap.registerPlugin(ScrollTrigger);
-      
-      // Benefit cards stagger
-      gsap.fromTo('.glass.border.border-white\\/10.rounded-3xl', 
-        { y: 40, opacity: 0 },
-        { 
-          y: 0, 
-          opacity: 1, 
-          duration: 0.75, 
-          stagger: 0.07,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: "#benefits",
-            start: "top 75%"
-          }
-        }
-      );
-      
-      // Experience section entrance
-      gsap.fromTo('#experience .glass', 
+      gsap.fromTo('#experience .glass',
         { scale: 0.985, opacity: 0.6 },
-        {
-          scale: 1,
-          opacity: 1,
-          duration: 0.8,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: "#experience",
-            start: "top 65%"
-          }
-        }
+        { scale:1, opacity:1, duration:0.85, ease:'power2.out',
+          scrollTrigger:{ trigger:'#experience', start:'top 65%' } }
       );
     }
 
-    // Main initialization
-    function init() {
-      initTailwind();
+    // ─── HERO BATTERY SLOW SIMULATION ────────────────────
+    setInterval(() => {
+      const bar  = document.getElementById('hero-charge-bar');
+      const text = document.getElementById('hero-charge-text');
+      if (!bar || !text || document.hidden) return;
+      if (Math.random() > 0.7) {
+        heroCharge = Math.max(71, Math.min(99, heroCharge + (Math.random() - 0.5) * 5));
+        bar.style.width      = heroCharge + '%';
+        text.textContent     = Math.round(heroCharge) + '%';
+      }
+    }, 24000);
+
+    // ─── BOOT ─────────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
       initScrollProgress();
-      
-      // Hero battery starts with a small pulse
-      setTimeout(() => {
-        const bar = document.getElementById('hero-charge-bar');
-        if (bar) bar.style.transition = 'width 600ms cubic-bezier(0.23, 1, 0.32, 1)';
-      }, 400);
-      
+      initNavBlur();
+      initScrollTop();
+      initScrollReveal();
+      initCounters();
+      initCardTilt();
+      initRipple();
       initComparison();
       initLayerControls();
-      initEnvironments();
       initBatteryInteractions();
-      initKeyboard();
-      initScrollAnimations();
-      
-      // Initialize map
+      initGSAP();
+
       setTimeout(() => {
         if (typeof L !== 'undefined') {
           initMap();
         } else {
-          // Load leaflet if not present
-          const script = document.createElement('script');
-          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-          script.onload = () => initMap();
-          document.head.appendChild(script);
+          const s = document.createElement('script');
+          s.src     = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+          s.onload  = initMap;
+          document.head.appendChild(s);
         }
-      }, 650);
-      
-      // Set default environment + layer
+      }, 800);
+
       setTimeout(() => {
         setEnvironment(0);
         activateLayer(0);
-      }, 920);
-      
-      // Default address (update this with real details)
-      updateAddress("Kochi, Kerala • India", "+91 98765 43210", "hello@energypoint.in");
-      
-      // Random nice touch: slow hero battery drain/charge simulation
-      setInterval(() => {
-        const bar = document.getElementById('hero-charge-bar');
-        const text = document.getElementById('hero-charge-text');
-        if (!bar || !text || document.hidden) return;
-        
-        if (Math.random() > 0.7) {
-          heroCharge = Math.max(71, Math.min(99, heroCharge + (Math.random() - 0.5) * 5));
-          bar.style.width = heroCharge + '%';
-          text.textContent = Math.round(heroCharge) + '%';
+        const firstEnvBtn = document.querySelector('.env-btn[data-env="0"]');
+        if (firstEnvBtn) {
+          firstEnvBtn.classList.add('!bg-white','!text-[#05070f]','border-white');
         }
-      }, 24000);
-      
-      // Console hint
-      console.log('%c[EnergyPoint] Futuristic landing ready. Press C (when focused on page) to manually charge the hero battery.', 'color:#334155');
-    }
+      }, 1100);
 
-    // Boot
-    window.onload = init;
+      const bar = document.getElementById('hero-charge-bar');
+      if (bar) setTimeout(() => { bar.style.transition = 'width 600ms cubic-bezier(0.23,1,0.32,1)'; }, 400);
+
+      console.log('%c[EnergyPoint] ⚡ Upgraded & ready. Press C to charge.', 'color:#00e5ff; font-weight:bold');
+    });
   </script>
 </body>
 </html>
